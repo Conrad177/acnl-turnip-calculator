@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #f3ead7;
+  --color-paper: #fffaf2;
+  --color-ink: #3c2a1e;
+  --color-leaf: #2c6b45;
+  --color-leaf-deep: #1d4630;
+  --color-soil: #8a5a3b;
+  --color-turnip: #6d4c7d;
+  --color-blush: #f3ddc8;
+  --color-loss: #8d3030;
+  --font-display: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+  --font-sans: "Avenir Next", "Segoe UI", sans-serif;
+}
+
+html {
+  background: var(--color-cream);
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background:
+    radial-gradient(circle at top, #fff7ea 0, transparent 42%),
+    var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+#root {
+  min-height: 100svh;
+}
