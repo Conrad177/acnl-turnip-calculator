@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Advice } from "./components/Advice.tsx";
+import { ChartPanel } from "./components/ChartPanel.tsx";
+import { CreditFooter } from "./components/CreditFooter.tsx";
 import { PatternOdds } from "./components/PatternOdds.tsx";
-import { PriceChart } from "./components/PriceChart.tsx";
 import { ProfitCard } from "./components/ProfitCard.tsx";
 import { VisitStay } from "./components/VisitStay.tsx";
 import { WeekGrid } from "./components/WeekGrid.tsx";
@@ -201,9 +202,7 @@ export default function App() {
         </div>
       </Card>
 
-      {forecast.status !== "empty" ? (
-        <Advice hint={forecast.hint} remaining={forecast.remaining} />
-      ) : null}
+      <Advice hint={forecast.hint} remaining={forecast.remaining} />
 
       <ProfitCard
         countRaw={ledger.count}
@@ -216,8 +215,6 @@ export default function App() {
         homeSells={sells}
         homeRanges={ranges}
       />
-
-      <VisitStay advice={visit} />
 
       <Card>
         <h2 className="font-display mb-3 text-2xl font-bold">Your Re-Tail</h2>
@@ -234,6 +231,25 @@ export default function App() {
           }
         />
       </Card>
+
+      <WeekHistory
+        history={ledger.history}
+        previous={ledger.previous}
+        onUsePattern={(pattern) => setLedger((current) => ({ ...current, previous: pattern }))}
+      />
+
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2 lg:gap-5">
+        <Card className="min-w-0">
+          <h2 className="font-display mb-4 text-2xl font-bold">Pattern odds</h2>
+          <PatternOdds chances={forecast.chances} ready={forecast.status === "ok"} />
+        </Card>
+        <Card className="min-w-0">
+          <h2 className="font-display mb-2 text-2xl font-bold">Price chart</h2>
+          <ChartPanel buy={chartBuy} sells={sells} slots={ranges} />
+        </Card>
+      </div>
+
+      <VisitStay advice={visit} />
 
       <Card>
         <h2 className="font-display mb-1 text-2xl font-bold">Friend's Re-Tail</h2>
@@ -291,22 +307,7 @@ export default function App() {
         />
       </Card>
 
-      <WeekHistory
-        history={ledger.history}
-        previous={ledger.previous}
-        onUsePattern={(pattern) => setLedger((current) => ({ ...current, previous: pattern }))}
-      />
-
-      <div className="grid min-w-0 gap-4 lg:grid-cols-2 lg:gap-5">
-        <Card className="min-w-0">
-          <h2 className="font-display mb-4 text-2xl font-bold">Pattern odds</h2>
-          <PatternOdds chances={forecast.chances} ready={forecast.status === "ok"} />
-        </Card>
-        <Card className="min-w-0">
-          <h2 className="font-display mb-2 text-2xl font-bold">Price chart</h2>
-          <PriceChart buy={chartBuy} sells={sells} slots={ranges} />
-        </Card>
-      </div>
+      <CreditFooter />
     </main>
   );
 }

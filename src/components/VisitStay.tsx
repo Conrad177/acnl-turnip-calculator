@@ -1,5 +1,7 @@
+import { emoteForVisit } from "../lib/emote.ts";
 import type { VisitAdvice } from "../lib/extras.ts";
 import { cn } from "../lib/utils.ts";
+import { StatusEmote } from "./StatusEmote.tsx";
 
 const toneClass = {
   info: "border-orange bg-cream text-ink",
@@ -17,8 +19,13 @@ export function VisitStay({ advice }: { advice: VisitAdvice | null }) {
         toneClass[advice.tone],
       )}
     >
-      <p className="font-display text-xl font-bold">{advice.title}</p>
-      <p className="mt-1 text-sm font-semibold leading-relaxed">{advice.detail}</p>
+      <div className="flex items-start gap-3">
+        <StatusEmote name={emoteForVisit(advice)} />
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-xl font-bold leading-tight">{advice.title}</p>
+          <p className="mt-1 text-sm font-semibold leading-relaxed">{advice.detail}</p>
+        </div>
+      </div>
     </div>
   );
 }

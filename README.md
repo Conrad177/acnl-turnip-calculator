@@ -6,9 +6,11 @@ The address bar holds the week: Joan's price, the twelve Re-Tail figures, last w
 
 **Start next week** stores this Sunday–Saturday, fills last week's pattern from the classification, and clears the current prices. Saved weeks stay on this device.
 
-You can log a friend's Re-Tail (and their Joan price if they told you) to see whether to visit their town or sell at home. Turnip count uses Joan's price as cost and shows profit or loss in bells.
+You can log a friend's Re-Tail (and their Joan price if they told you) to see whether to visit their town or sell at home. That friend form sits under pattern odds and the price chart. Turnip count uses Joan's price as cost and shows profit or loss in bells.
 
-This is not affiliated with Nintendo. It does not use Nintendo logos, characters, music, or UI art.
+The price chart defaults to a numbers table (remaining min–max and the likely band). Switch to **Bands** and tap the chart for a larger overlay; tap outside, Close, or Escape to dismiss.
+
+This is not affiliated with Nintendo.
 
 ## New Leaf and New Horizons
 
