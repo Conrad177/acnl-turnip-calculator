@@ -217,6 +217,8 @@ export default function App() {
         homeRanges={ranges}
       />
 
+      <VisitStay advice={visit} />
+
       <Card>
         <h2 className="font-display mb-1 text-2xl font-bold">Your Re-Tail</h2>
         <p className="mb-3 text-sm font-semibold leading-relaxed text-soil">
@@ -249,7 +251,7 @@ export default function App() {
               id="friend-name"
               autoComplete="off"
               value={ledger.friend.name}
-              placeholder="Maple"
+              placeholder="Optional"
               onChange={(event) =>
                 setLedger((current) => ({
                   ...current,
@@ -291,8 +293,6 @@ export default function App() {
           }
         />
       </Card>
-
-      <VisitStay advice={visit} />
 
       <WeekHistory
         history={ledger.history}

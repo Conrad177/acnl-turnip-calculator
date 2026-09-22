@@ -17,7 +17,7 @@ export function WeekGrid({
 }) {
   return (
     <>
-      <div className="md:hidden">
+      <div className="lg:hidden">
         <div className="mb-1 grid grid-cols-[2.4rem_1fr_1fr] gap-x-2 px-0.5 text-center text-xs font-bold text-ink">
           <span className="sr-only">Day</span>
           <span>AM</span>
@@ -38,7 +38,7 @@ export function WeekGrid({
           ))}
         </div>
       </div>
-      <div className="hidden overflow-x-auto md:block">
+      <div className="hidden overflow-x-auto lg:block">
         <table className="w-full table-fixed border-separate border-spacing-1 text-center">
           <caption className="sr-only">
             Re-Tail sell prices from Monday morning through Saturday afternoon.
@@ -167,7 +167,7 @@ function PriceCell({
         aria-invalid={invalid && (sells[index] ?? "") !== ""}
         aria-describedby={describedBy}
         onChange={(event) => onChange(index, event.target.value)}
-        className="h-12 rounded-2xl px-1 text-center text-base font-bold tabular-nums md:h-11 md:text-sm"
+        className="h-12 rounded-2xl px-1 text-center text-base font-bold tabular-nums lg:h-11 lg:text-sm"
       />
       <p id={describedBy} className="mt-1 min-h-8 text-[11px] leading-tight text-soil tabular-nums">
         {range ? (
