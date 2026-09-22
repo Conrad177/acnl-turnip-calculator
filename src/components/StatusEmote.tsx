@@ -14,7 +14,7 @@ export function StatusEmote({
       alt=""
       width={56}
       height={56}
-      className={cn("size-11 shrink-0 object-contain sm:size-12", className)}
+      className={cn("size-11 shrink-0 object-contain [image-rendering:pixelated] sm:size-12", className)}
     />
   );
 }

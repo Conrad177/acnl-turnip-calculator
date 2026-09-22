@@ -4,9 +4,9 @@ export function CreditFooter() {
       <img
         src={`${import.meta.env.BASE_URL}conrad.png`}
         alt=""
-        width={28}
-        height={28}
-        className="size-7 rounded-full object-cover"
+        width={32}
+        height={32}
+        className="size-8 rounded-full object-cover"
       />
       <span className="text-[13px] font-medium text-white/95">app by Conrad</span>
     </footer>
