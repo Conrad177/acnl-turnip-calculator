@@ -165,6 +165,18 @@ describe("pattern elimination", () => {
     expect(forecastWeek(111, blanks(), "unknown").status).toBe("impossible");
   });
 
+  it("accepts Joan's 90, 100, and 110, and rejects 89 and 111", () => {
+    for (const buy of [90, 100, 110]) {
+      expect(forecastWeek(buy, blanks(), "unknown").status).toBe("ok");
+    }
+    for (const buy of [89, 111]) {
+      const forecast = forecastWeek(buy, blanks(), "unknown");
+      expect(forecast.status).toBe("impossible");
+      expect(forecast.hint.tone).toBe("bad");
+      expect(forecast.hint.title.toLowerCase()).toMatch(/joan/);
+    }
+  });
+
   it("says the week is a loss once decreasing is the only pattern left", () => {
     const week = generateWeek(2, 1);
     let decreasing = week;
@@ -218,6 +230,71 @@ describe("advice copy", () => {
     const forecast = forecastWeek(110, sells([99, 110, 182, 627]), "unknown");
     expect(forecast.status).toBe("ok");
     expect(forecast.hint.detail).toMatch(/Tuesday afternoon/);
+  });
+
+  it("labels first week buying as a New Horizons assumption", () => {
+    const forecast = forecastWeek(100, blanks(), "first");
+    const text = forecast.hint.detail;
+    expect(text).toMatch(/New Horizons/);
+    expect(text.toLowerCase()).toMatch(/assumes/);
+    expect(text.toLowerCase()).toMatch(/not a proven new leaf rule/);
+    expect(text.toLowerCase()).not.toMatch(/is a small spike, so/);
+    expect(text).not.toMatch(/0%/);
+  });
+
+  it("uses each known last week's decreasing chance", () => {
+    expect(forecastWeek(100, blanks(), "fluctuating").hint.detail).toMatch(
+      /fluctuating, 15% of weeks never clear/,
+    );
+    expect(forecastWeek(100, blanks(), "large").hint.detail).toMatch(
+      /large spike, 20% of weeks never clear/,
+    );
+    expect(forecastWeek(100, blanks(), "small").hint.detail).toMatch(
+      /small spike, 15% of weeks never clear/,
+    );
+  });
+
+  it("pattern odds sum to about 100% and change with last week", () => {
+    const rows = ["unknown", "first", "fluctuating", "large", "decreasing", "small"] as const;
+    const signatures = rows.map((previous) => {
+      const forecast = forecastWeek(100, blanks(), previous);
+      const sum = forecast.chances.reduce((total, chance) => total + chance.probability, 0);
+      expect(sum).toBeCloseTo(1, 6);
+      return forecast.chances.map((chance) => Math.round(chance.probability * 1000));
+    });
+    const unique = new Set(signatures.map((row) => row.join(",")));
+    expect(unique.size).toBe(rows.length);
+  });
+
+  it("mentions the half-and-half hedge only while both spikes are open", () => {
+    const open = forecastWeek(100, blanks(), "unknown");
+    expect(open.hint.detail.toLowerCase()).toMatch(/hedge/);
+    expect(open.hint.detail.toLowerCase()).toMatch(/sell half/);
+    const smallOnly = forecastWeek(100, sells([50]), "unknown");
+    expect(smallOnly.chances.find((chance) => chance.id === "large")?.probability ?? 1).toBeLessThan(0.02);
+    expect(smallOnly.hint.detail.toLowerCase()).not.toMatch(/hedge/);
+    expect(smallOnly.hint.detail.toLowerCase()).not.toMatch(/sell half/);
+    expect(smallOnly.hint.detail.toLowerCase()).not.toMatch(/large spike/);
+  });
+
+  it("does not describe a large spike after that pattern is gone", () => {
+    const forecast = forecastWeek(100, sells([95]), "unknown");
+    expect(forecast.status).toBe("ok");
+    expect(forecast.chances.find((chance) => chance.id === "large")?.probability ?? 1).toBeLessThan(0.01);
+    expect(forecast.hint.detail.toLowerCase()).not.toMatch(/large spike/);
+    expect(forecast.hint.detail.toLowerCase()).toMatch(/rollercoaster/);
+    expect(forecast.hint.detail.toLowerCase()).not.toMatch(/hedge/);
+  });
+
+  it("names Saturday morning once the small-spike peak is the price in hand", () => {
+    const forecast = forecastWeek(
+      98,
+      sells([78, 73, 68, 65, 62, 58, 54, 100, 89, 139, 178]),
+      "unknown",
+    );
+    expect(forecast.status).toBe("ok");
+    expect(forecast.hint.detail).toMatch(/Saturday morning/);
+    expect(forecast.hint.detail).toMatch(/178/);
   });
 
   it("says Thursday afternoon is the sell on a locked decreasing week", () => {

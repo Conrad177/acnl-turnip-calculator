@@ -6,7 +6,7 @@ This is not affiliated with Nintendo. It does not use Nintendo logos, characters
 
 ## New Leaf and New Horizons
 
-New Leaf and New Horizons use the same turnip generator. [Ninji's datamine of the New Horizons code](https://gist.github.com/Treeki/85be14d297c80c8b3c0a76375743325b) is what this app runs. [Turnip Prophet](https://turnipprophet.io/) and the [Reddit walkthrough of that code](https://www.reddit.com/r/ac_newhorizons/comments/g1xncb/analysis_of_the_turnip_prices_code/) describe the same function. [Thonky's New Leaf stalk-market guide](https://www.thonky.com/animal-crossing-new-leaf/stalk-market) describes the same four shapes, the same spike timing, and Joan's 90–110 bell buy price, without publishing the numeric odds.
+This app runs [Ninji's datamine of the New Horizons code](https://gist.github.com/Treeki/85be14d297c80c8b3c0a76375743325b). No public New Leaf decompilation or numeric rate table turned up, so the generator was not swapped for a different one. [Turnip Prophet](https://turnipprophet.io/) and the [Reddit walkthrough of that code](https://www.reddit.com/r/ac_newhorizons/comments/g1xncb/analysis_of_the_turnip_prices_code/) describe the same New Horizons function. [Thonky's New Leaf stalk-market guide](https://www.thonky.com/animal-crossing-new-leaf/stalk-market) describes the same four shapes and the same spike timing, in rough bells, not these rates. Recorded New Leaf weeks fit the function. That fit is not proof the games share it.
 
 What matches:
 

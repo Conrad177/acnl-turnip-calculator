@@ -512,7 +512,7 @@ export function forecastWeek(
         tone: "bad",
         title: "These prices cannot happen together",
         detail:
-          "New Leaf never prints this set of bells in one week. Recheck Joan's price and the figures you typed.",
+          "This price model cannot produce this set of bells in one week. Recheck Joan's price and the figures you typed.",
       },
     };
   }
@@ -594,15 +594,15 @@ function withSkip(detail: string, sells: Sell[]): string {
 }
 
 function neverClears(previous: PreviousChoice): string {
+  if (previous === "first") {
+    return "First week buying assumes the New Horizons function, which forces a small spike. That is not a proven New Leaf rule.";
+  }
   if (previous === "unknown") {
     return "About 15% of weeks never clear Joan's price (14.8% in this model).";
   }
   const decreasing = priorFor(previous)[2] ?? 0;
   const pct = Math.round(decreasing * 1000) / 10;
   const shown = Number.isInteger(pct) ? `${pct.toFixed(0)}%` : `${pct.toFixed(1)}%`;
-  if (previous === "first") {
-    return `A first week of buying is a small spike, so ${shown} of weeks like this never clear Joan's price.`;
-  }
   return `With last week recorded as ${PATTERN_NAMES[previous].toLowerCase()}, ${shown} of weeks never clear Joan's price.`;
 }
 
@@ -616,19 +616,33 @@ function hedgeSentence(largeDay: string | null): string {
   return "A hedge, not the usual plan, is to sell half on the large-spike peak and half on the next half-day.";
 }
 
-function patternSentences(largeDay: string | null, smallDay: string | null): string {
-  const large = largeDay
-    ? `A large spike pays the most on its third rise, ${largeDay}.`
-    : "A large spike pays the most on its third rise.";
-  const small = smallDay
-    ? `A small spike pays the most on its fourth rise, ${smallDay}.`
-    : "A small spike pays the most on its fourth rise.";
-  return [
-    "Fluctuating, also called a rollercoaster, rises and falls more than once.",
-    large,
-    "A decreasing week does not pay you back.",
-    small,
-  ].join(" ");
+function patternSentences(
+  chance: (id: PatternId) => number,
+  largeDay: string | null,
+  smallDay: string | null,
+): string {
+  const parts: string[] = [];
+  if (chance("fluctuating") > 0.01) {
+    parts.push("Fluctuating, also called a rollercoaster, rises and falls more than once.");
+  }
+  if (chance("large") > 0.01) {
+    parts.push(
+      largeDay
+        ? `A large spike pays the most on its third rise, ${largeDay}.`
+        : "A large spike pays the most on its third rise.",
+    );
+  }
+  if (chance("decreasing") > 0.01) {
+    parts.push("A decreasing week does not pay you back.");
+  }
+  if (chance("small") > 0.01) {
+    parts.push(
+      smallDay
+        ? `A small spike pays the most on its fourth rise, ${smallDay}.`
+        : "A small spike pays the most on its fourth rise.",
+    );
+  }
+  return parts.join(" ");
 }
 
 function describeHint(
@@ -729,6 +743,13 @@ function describeHint(
   }
 
   if (latest != null && futureMax <= latest && latest >= buy) {
+    const peakDay =
+      chance("small") >= 0.5 && smallDay
+        ? smallDay
+        : chance("large") >= 0.5 && largeDay
+          ? largeDay
+          : null;
+    const named = peakDay ? `${peakDay} is the peak. ` : "";
     const roller =
       chance("fluctuating") >= 0.5
         ? "Fluctuating, also called a rollercoaster, is as high as the rest of the week gets."
@@ -736,7 +757,7 @@ function describeHint(
     return say({
       tone: "good",
       title: "Selling now locks the gain",
-      detail: `${roller} Reese is paying that price until the next change.`,
+      detail: `${named}${roller} Reese is paying that price until the next change.`,
     });
   }
 
@@ -757,7 +778,16 @@ function describeHint(
     return say({
       tone: "info",
       title: "A spike is still possible",
-      detail: `${neverClears(previous)} ${patternSentences(largeDay, smallDay)}${hedge}`,
+      detail: `${neverClears(previous)} ${patternSentences(chance, largeDay, smallDay)}${hedge}`,
+    });
+  }
+
+  if (chance("fluctuating") >= 0.5) {
+    return say({
+      tone: "info",
+      title: "Keep the noon check",
+      detail:
+        "Fluctuating, also called a rollercoaster, rises and falls more than once. Re-Tail changes price when the shop opens and again at noon. One more number will narrow the pattern.",
     });
   }
 

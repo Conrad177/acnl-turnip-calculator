@@ -46,12 +46,12 @@ export default function App() {
       <header className="flex items-center gap-3 rounded-[1.75rem] border-[5px] border-orange bg-cream px-4 py-3 shadow-[0_6px_0_0_var(--color-orange-deep)] sm:gap-4 sm:px-5">
         <img
           src={`${import.meta.env.BASE_URL}turnip-icon.png`}
-          alt="ACNL Turnip Calculator"
+          alt="Turnip"
           width={120}
           height={120}
-          className="size-[120px] shrink-0 [image-rendering:pixelated]"
+          className="size-16 shrink-0 [image-rendering:pixelated] sm:size-[120px]"
         />
-        <h1 className="font-display text-3xl leading-none font-bold text-ink sm:text-4xl">
+        <h1 className="min-w-0 font-display text-2xl leading-tight font-bold text-ink sm:text-4xl">
           ACNL Turnip Calculator
         </h1>
       </header>
@@ -85,13 +85,17 @@ export default function App() {
                 <label
                   key={option.value}
                   htmlFor={`previous-${option.value}`}
-                  className="flex min-h-12 cursor-pointer items-center gap-2 rounded-full border-[3px] border-orange bg-paper px-3 py-2 text-sm font-semibold text-ink has-[[data-state=checked]]:bg-orange has-[[data-state=checked]]:text-white has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-orange-deep"
+                  className="flex min-h-12 min-w-0 cursor-pointer items-center gap-2 rounded-full border-[3px] border-orange bg-paper px-3 py-2 text-sm leading-snug font-semibold text-ink has-[[data-state=checked]]:bg-orange has-[[data-state=checked]]:text-white has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-orange-deep"
                 >
                   <RadioGroupItem id={`previous-${option.value}`} value={option.value} />
-                  <span>{option.label}</span>
+                  <span className="min-w-0">{option.label}</span>
                 </label>
               ))}
             </RadioGroup>
+            <p id="first-week-note" className="mt-3 text-sm leading-relaxed font-semibold text-ink">
+              First week buying assumes the New Horizons first-purchase function, which forces a
+              small spike. It is not a proven New Leaf rule.
+            </p>
           </fieldset>
         </div>
         <div className="mt-4 flex justify-end">
