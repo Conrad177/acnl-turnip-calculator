@@ -612,7 +612,7 @@ function remainingBounds(
   return { guaranteedMin, possibleMax };
 }
 
-const HALF_DAYS = [
+export const HALF_DAYS = [
   "Monday morning",
   "Monday afternoon",
   "Tuesday morning",

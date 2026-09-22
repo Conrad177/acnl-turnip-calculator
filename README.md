@@ -2,7 +2,11 @@
 
 A fan-made stalk-market calculator for **Animal Crossing: New Leaf**. Enter Joan's Sunday buy price and the Re-Tail prices you have seen. It shows how likely each pattern is, the possible and likely price in every empty slot, and a short note on whether to sell or wait.
 
-The address bar holds the week: Joan's price, the twelve Re-Tail figures, and last week's pattern. Open that URL on another device, bookmark it, or use **Copy share link**. If the URL has none of those keys, the last week saved in this browser is used.
+The address bar holds the week: Joan's price, the twelve Re-Tail figures, last week's pattern, how many turnips you bought, and a friend's Re-Tail week if you added one. Open that URL on another device, bookmark it, or use **Copy share link**. If the URL has none of those keys, the last week saved in this browser is used.
+
+**Start next week** stores this Sunday–Saturday, fills last week's pattern from the classification, and clears the current prices. Saved weeks stay on this device.
+
+You can log a friend's Re-Tail (and their Joan price if they told you) to see whether to visit their town or sell at home. Turnip count uses Joan's price as cost and shows profit or loss in bells.
 
 This is not affiliated with Nintendo. It does not use Nintendo logos, characters, music, or UI art.
 
@@ -46,7 +50,7 @@ Linux (AppImage and an unpacked binary):
 npm run dist
 ```
 
-The unpacked program is `release/linux-unpacked/acnl-turnip-calculator`. The AppImage is `release/ACNL Turnip Calculator-1.0.0.AppImage`.
+The unpacked program is `release/linux-unpacked/acnl-turnip-calculator`. The AppImage is `release/ACNL Turnip Calculator-1.0.0.AppImage`. The usual way to use the calculator is the web page in a phone browser.
 
 Windows installer and portable executable (both end in `.exe`, written to `release/`):
 

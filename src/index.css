@@ -26,6 +26,7 @@ body {
   background-color: var(--color-grass);
   background-image: url("./assets/grass-tile.png");
   background-repeat: repeat;
+  overflow-x: clip;
 }
 
 body {
