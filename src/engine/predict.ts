@@ -732,8 +732,10 @@ function describeHint(
     sellTime,
   });
   const oneSpikeDay = (): string | null => {
-    if (largeDay && smallDay && largeDay !== smallDay && bothSpikes) return null;
-    return largeDay ?? smallDay;
+    if (bothSpikes) return null;
+    if (chance("small") >= 0.5) return smallDay;
+    if (chance("large") >= 0.45) return largeDay;
+    return null;
   };
   const entered: number[] = [];
   let latest: number | null = null;

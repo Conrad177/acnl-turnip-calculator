@@ -284,6 +284,7 @@ describe("advice copy", () => {
     expect(forecast.hint.detail.toLowerCase()).not.toMatch(/large spike/);
     expect(forecast.hint.detail.toLowerCase()).toMatch(/rollercoaster/);
     expect(forecast.hint.detail.toLowerCase()).not.toMatch(/hedge/);
+    expect(forecast.hint.sellTime).toBeNull();
   });
 
   it("names Saturday morning once the small-spike peak is the price in hand", () => {
