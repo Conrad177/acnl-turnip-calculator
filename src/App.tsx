@@ -10,6 +10,7 @@ import { Label } from "./components/ui/label.tsx";
 import { RadioGroup, RadioGroupItem } from "./components/ui/radio-group.tsx";
 import { PATTERN_IDS, PATTERN_NAMES, type PreviousChoice } from "./engine/patterns.ts";
 import { forecastWeek, type SlotRange } from "./engine/predict.ts";
+import { parseShare, serializeShare, shareHref } from "./lib/share.ts";
 import { blankLedger, readLedger, writeLedger, type LedgerState } from "./lib/storage.ts";
 
 const PREVIOUS_OPTIONS: Array<{ value: PreviousChoice; label: string }> = [
@@ -22,12 +23,30 @@ function digits(value: string, max: number): string {
   return value.replace(/\D/g, "").slice(0, max);
 }
 
+function loadInitial(): LedgerState {
+  const fromUrl = parseShare(window.location.search) ?? parseShare(window.location.hash);
+  if (fromUrl) return fromUrl;
+  return readLedger();
+}
+
 export default function App() {
-  const [ledger, setLedger] = useState<LedgerState>(() => readLedger());
+  const [ledger, setLedger] = useState<LedgerState>(loadInitial);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     writeLedger(ledger);
+    const next = `${window.location.pathname}${serializeShare(ledger)}`;
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (current !== next) {
+      window.history.replaceState(null, "", next);
+    }
   }, [ledger]);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = window.setTimeout(() => setCopied(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
 
   const buy = ledger.buy === "" ? null : Number(ledger.buy);
   const sells = ledger.sells.map((value) => (value === "" ? null : Number(value)));
@@ -40,6 +59,16 @@ export default function App() {
     forecast.status === "ok" ? forecast.slots : Array.from({ length: 12 }, () => null);
 
   const chartBuy = buy != null && buy >= 90 && buy <= 110 ? buy : null;
+
+  async function copyShareLink() {
+    const href = shareHref(ledger, window.location);
+    try {
+      await navigator.clipboard.writeText(href);
+      setCopied(true);
+    } catch {
+      window.prompt("Copy this share link", href);
+    }
+  }
 
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-5xl flex-col gap-5 px-3 py-5 sm:px-6 sm:py-8">
@@ -98,14 +127,19 @@ export default function App() {
             </p>
           </fieldset>
         </div>
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+          <Button type="button" variant="outline" onClick={() => void copyShareLink()}>
+            {copied ? "Copied share link" : "Copy share link"}
+          </Button>
           <Button type="button" onClick={() => setLedger(blankLedger())}>
             Clear this week
           </Button>
         </div>
       </Card>
 
-      {forecast.status !== "empty" ? <Advice hint={forecast.hint} /> : null}
+      {forecast.status !== "empty" ? (
+        <Advice hint={forecast.hint} remaining={forecast.remaining} />
+      ) : null}
 
       <Card>
         <h2 className="font-display mb-3 text-2xl font-bold">Re-Tail prices</h2>
@@ -133,10 +167,6 @@ export default function App() {
           <PriceChart buy={chartBuy} sells={sells} slots={ranges} />
         </Card>
       </div>
-
-      <footer className="px-2 pb-4 text-center text-sm font-semibold text-white [text-shadow:0_2px_0_#3f7d22]">
-        Fan-made Animal Crossing: New Leaf calculator. Not affiliated with Nintendo.
-      </footer>
     </main>
   );
 }

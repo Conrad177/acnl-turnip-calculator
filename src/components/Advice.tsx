@@ -1,4 +1,4 @@
-import type { Hint } from "../engine/predict.ts";
+import type { Hint, RemainingBounds } from "../engine/predict.ts";
 import { cn } from "../lib/utils.ts";
 
 const toneClass = {
@@ -8,7 +8,13 @@ const toneClass = {
   bad: "border-loss bg-[#ffe8e4] text-loss",
 } as const;
 
-export function Advice({ hint }: { hint: Hint }) {
+export function Advice({
+  hint,
+  remaining,
+}: {
+  hint: Hint;
+  remaining: RemainingBounds | null;
+}) {
   return (
     <div
       role={hint.tone === "bad" ? "alert" : "status"}
@@ -19,7 +25,17 @@ export function Advice({ hint }: { hint: Hint }) {
       )}
     >
       <p className="font-display text-xl font-bold">{hint.title}</p>
+      {hint.sellTime ? (
+        <p className="mt-2 text-sm font-bold">
+          Best guess sell time: {hint.sellTime}
+        </p>
+      ) : null}
       <p className="mt-1 text-sm leading-relaxed font-semibold">{hint.detail}</p>
+      {remaining ? (
+        <p className="mt-2 text-sm font-semibold tabular-nums">
+          Remaining: guaranteed min {remaining.guaranteedMin} · possible max {remaining.possibleMax}
+        </p>
+      ) : null}
     </div>
   );
 }

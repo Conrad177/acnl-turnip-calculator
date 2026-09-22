@@ -2,6 +2,8 @@
 
 A fan-made stalk-market calculator for **Animal Crossing: New Leaf**. Enter Joan's Sunday buy price and the Re-Tail prices you have seen. It shows how likely each pattern is, the possible and likely price in every empty slot, and a short note on whether to sell or wait.
 
+The address bar holds the week: Joan's price, the twelve Re-Tail figures, and last week's pattern. Open that URL on another device, bookmark it, or use **Copy share link**. If the URL has none of those keys, the last week saved in this browser is used.
+
 This is not affiliated with Nintendo. It does not use Nintendo logos, characters, music, or UI art.
 
 ## New Leaf and New Horizons

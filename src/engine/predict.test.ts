@@ -313,6 +313,59 @@ describe("advice copy", () => {
     expect(forecast.hint.detail.toLowerCase()).toMatch(/spike window has shut/);
     expect(forecast.hint.detail.toLowerCase()).toMatch(/saturday/);
     expect(forecast.hint.detail.toLowerCase()).toMatch(/does not pay you back/);
+    expect(forecast.hint.sellTime).toBe("now");
+  });
+
+  it("names the large-spike peak half-day before that price is typed", () => {
+    const forecast = forecastWeek(110, sells([99, 110, 182]), "unknown");
+    expect(forecast.status).toBe("ok");
+    expect(forecast.hint.sellTime).toBe("Tuesday afternoon");
+    expect(forecast.remaining).not.toBeNull();
+    expect(forecast.remaining!.possibleMax).toBeGreaterThanOrEqual(600);
+  });
+
+  it("names now once the large-spike peak is the price in hand", () => {
+    const forecast = forecastWeek(110, sells([99, 110, 182, 627]), "unknown");
+    expect(forecast.hint.sellTime).toBe("now");
+    expect(forecast.hint.detail).toMatch(/Tuesday afternoon/);
+  });
+
+  it("names now at a logged small-spike peak", () => {
+    const forecast = forecastWeek(
+      98,
+      sells([78, 73, 68, 65, 62, 58, 54, 100, 89, 139, 178]),
+      "unknown",
+    );
+    expect(forecast.hint.sellTime).toBe("now");
+    expect(forecast.hint.detail).toMatch(/Saturday morning/);
+  });
+
+  it("does not invent a sell time when both spikes are still open", () => {
+    const forecast = forecastWeek(100, blanks(), "unknown");
+    expect(forecast.hint.sellTime).toBeNull();
+  });
+
+  it("surfaces a week-level guaranteed min and possible max for remaining slots", () => {
+    const forecast = forecastWeek(100, blanks(), "unknown");
+    expect(forecast.remaining).not.toBeNull();
+    expect(forecast.remaining!.guaranteedMin).toBeGreaterThan(0);
+    expect(forecast.remaining!.possibleMax).toBeGreaterThan(forecast.remaining!.guaranteedMin);
+    expect(forecast.remaining!.possibleMax).toBeGreaterThanOrEqual(500);
+    expect(forecast.remaining!.possibleMax).toBeLessThan(660);
+    const monday = forecast.slots[0];
+    expect(monday).not.toBeNull();
+    expect(forecast.remaining!.guaranteedMin).toBeGreaterThanOrEqual(monday!.min);
+  });
+
+  it("hides remaining bounds once the week is filled in", () => {
+    const forecast = forecastWeek(
+      91,
+      [120, 126, 125, 123, 71, 65, 60, 95, 70, 64, 86, 120],
+      "unknown",
+    );
+    expect(forecast.status).toBe("ok");
+    expect(forecast.remaining).toBeNull();
+    expect(forecast.hint.sellTime).toBeNull();
   });
 });
 
