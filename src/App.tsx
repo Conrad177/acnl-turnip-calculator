@@ -220,11 +220,8 @@ export default function App() {
       <VisitStay advice={visit} />
 
       <Card>
-        <h2 className="font-display mb-1 text-2xl font-bold">Your Re-Tail</h2>
-        <p className="mb-3 text-sm font-semibold leading-relaxed text-soil">
-          Reese in your town. Morning is before noon; afternoon is noon onward.
-        </p>
-        <WeekGrid
+        <h2 className="font-display mb-3 text-2xl font-bold">Your Re-Tail</h2>
+        <WeekGrid>
           sells={ledger.sells}
           ranges={ranges}
           invalid={forecast.status === "impossible"}

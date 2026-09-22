@@ -58,9 +58,6 @@ export function WeekGrid({
               <tr key={period}>
                 <th scope="row" className="pr-1 text-left text-xs font-bold text-ink">
                   {period === "Morning" ? "AM" : "PM"}
-                  <span className="sr-only">
-                    {period === "Morning" ? ", before noon" : ", noon onward"}
-                  </span>
                 </th>
                 {DAYS.map((day, column) => {
                   const index = column * 2 + row;
