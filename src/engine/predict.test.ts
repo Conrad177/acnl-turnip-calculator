@@ -184,10 +184,10 @@ describe("pattern elimination", () => {
   });
 });
 
-describe("empty ledger", () => {
+describe("empty week", () => {
   it("waits for Joan's price", () => {
     const forecast = forecastWeek(null, blanks(), "unknown");
     expect(forecast.status).toBe("empty");
-    expect(forecast.hint.title).toMatch(/blank/i);
+    expect(`${forecast.hint.title} ${forecast.hint.detail}`.toLowerCase()).not.toContain("ledger");
   });
 });

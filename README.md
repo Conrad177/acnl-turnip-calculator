@@ -1,6 +1,6 @@
 # ACNL Turnip Calculator
 
-A fan-made stalk-market calculator for **Animal Crossing: New Leaf**. Enter Joan's Sunday buy price and the Re-Tail prices you have seen. The ledger shows how likely each pattern is, the possible and likely price in every empty slot, and a short note on whether to sell or wait.
+A fan-made stalk-market calculator for **Animal Crossing: New Leaf**. Enter Joan's Sunday buy price and the Re-Tail prices you have seen. It shows how likely each pattern is, the possible and likely price in every empty slot, and a short note on whether to sell or wait.
 
 This is not affiliated with Nintendo. It does not use Nintendo logos, characters, music, or UI art.
 

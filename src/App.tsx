@@ -101,7 +101,7 @@ export default function App() {
         </div>
       </Card>
 
-      <Advice hint={forecast.hint} />
+      {forecast.status !== "empty" ? <Advice hint={forecast.hint} /> : null}
 
       <Card>
         <h2 className="font-display mb-3 text-2xl font-bold">Re-Tail prices</h2>

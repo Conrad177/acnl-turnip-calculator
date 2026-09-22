@@ -476,7 +476,7 @@ export function forecastWeek(
       slots: Array.from({ length: 12 }, () => null),
       hint: {
         tone: "info",
-        title: "The ledger is blank",
+        title: "Waiting for Sunday's price",
         detail:
           "Enter the price Joan charged on Sunday morning. That number is the base for every Re-Tail price this week.",
       },
