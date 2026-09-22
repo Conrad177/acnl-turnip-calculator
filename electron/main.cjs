@@ -1,7 +1,7 @@
 const { app, BrowserWindow } = require("electron");
 const path = require("path");
 
-app.setName("Turnip Ledger");
+app.setName("ACNL Turnip Calculator");
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -9,8 +9,8 @@ function createWindow() {
     height: 860,
     minWidth: 380,
     minHeight: 640,
-    title: "Turnip Ledger",
-    backgroundColor: "#f3ead7",
+    title: "ACNL Turnip Calculator",
+    backgroundColor: "#6ed43c",
     autoHideMenuBar: true,
     icon: path.join(__dirname, "icon.png"),
     webPreferences: {
@@ -19,7 +19,7 @@ function createWindow() {
       sandbox: true,
     },
   });
-  win.setTitle("Turnip Ledger");
+  win.setTitle("ACNL Turnip Calculator");
   win.loadFile(path.join(__dirname, "../dist/index.html"));
 }
 

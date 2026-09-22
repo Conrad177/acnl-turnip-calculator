@@ -15,11 +15,11 @@ export function PatternOdds({
         return (
           <li key={chance.id}>
             <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
-              <span className="font-semibold">{chance.name}</span>
-              <span className="tabular-nums text-soil">{percent ?? "—"}</span>
+              <span className="font-bold">{chance.name}</span>
+              <span className="font-bold tabular-nums text-soil">{percent ?? "—"}</span>
             </div>
             <div
-              className="h-2 overflow-hidden rounded-full bg-blush"
+              className="h-4 overflow-hidden rounded-full border-[3px] border-orange/80 bg-blush"
               role="meter"
               aria-label={`${chance.name} probability`}
               aria-valuemin={0}

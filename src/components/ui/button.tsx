@@ -4,17 +4,19 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils.ts";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border-[3px] text-base font-bold transition active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-deep focus-visible:ring-offset-2 focus-visible:ring-offset-grass disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-leaf text-paper hover:bg-leaf-deep",
-        outline: "border border-soil/30 bg-paper text-ink hover:bg-blush",
-        ghost: "text-ink hover:bg-blush",
+        default:
+          "border-orange-deep bg-orange text-white shadow-[0_4px_0_0_#c86a08] hover:bg-[#ffaa33] active:shadow-none",
+        outline:
+          "border-orange bg-paper text-ink shadow-[0_4px_0_0_var(--color-orange-deep)] hover:bg-blush active:shadow-none",
+        ghost: "border-transparent bg-transparent text-ink shadow-none hover:bg-blush",
       },
       size: {
-        default: "h-10 px-4",
-        sm: "h-8 px-3 text-xs",
+        default: "h-12 px-5",
+        sm: "h-10 px-4 text-sm",
       },
     },
     defaultVariants: {

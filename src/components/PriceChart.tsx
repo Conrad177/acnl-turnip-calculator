@@ -13,8 +13,8 @@ export function PriceChart({
 }) {
   if (buy == null) {
     return (
-      <p className="flex h-48 items-center justify-center text-center text-sm text-soil">
-        The chart fills in after you enter Joan's Sunday price.
+      <p className="flex h-48 items-center justify-center text-center text-sm font-semibold text-soil">
+        No Sunday price yet.
       </p>
     );
   }
@@ -54,7 +54,7 @@ export function PriceChart({
       viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-label="Turnip price chart for the twelve Re-Tail periods"
-      className="h-auto w-full"
+      className="h-auto w-full font-sans"
     >
       {ticks.map((tick) => (
         <g key={tick}>
@@ -63,10 +63,10 @@ export function PriceChart({
             x2={width - padR}
             y1={y(tick)}
             y2={y(tick)}
-            stroke="#e6d3c0"
+            stroke="#f0d2a4"
             strokeWidth="1"
           />
-          <text x={padL - 8} y={y(tick) + 4} textAnchor="end" fontSize="11" fill="#8a5a3b">
+          <text x={padL - 8} y={y(tick) + 4} textAnchor="end" fontSize="12" fontWeight="600" fill="#9a6230">
             {tick}
           </text>
         </g>
@@ -76,11 +76,11 @@ export function PriceChart({
         x2={width - padR}
         y1={buyY}
         y2={buyY}
-        stroke="#6d4c7d"
+        stroke="#e07a10"
         strokeDasharray="4 4"
-        strokeWidth="1.5"
+        strokeWidth="2"
       />
-      <text x={width - padR} y={buyY - 6} textAnchor="end" fontSize="11" fill="#6d4c7d">
+      <text x={width - padR} y={buyY - 6} textAnchor="end" fontSize="12" fontWeight="700" fill="#d9780d">
         Joan {buy}
       </text>
       {slots.map((slot, index) => {
@@ -93,7 +93,7 @@ export function PriceChart({
               width="14"
               height={Math.max(1, y(slot.min) - y(slot.max))}
               rx="4"
-              fill="#e7d3ef"
+              fill="#ffe0a3"
             />
             <rect
               x={x(index) - 4}
@@ -101,16 +101,16 @@ export function PriceChart({
               width="8"
               height={Math.max(2, y(slot.likelyMin) - y(slot.likelyMax))}
               rx="3"
-              fill="#2c6b45"
+              fill="#3aaa34"
             />
           </g>
         );
       })}
       {entered.length > 1 ? (
-        <path d={line} fill="none" stroke="#3c2a1e" strokeWidth="2" />
+        <path d={line} fill="none" stroke="#6b3e1b" strokeWidth="2.5" />
       ) : null}
       {entered.map((point) => (
-        <circle key={point.index} cx={x(point.index)} cy={y(point.price)} r="4" fill="#3c2a1e" />
+        <circle key={point.index} cx={x(point.index)} cy={y(point.price)} r="5" fill="#6b3e1b" />
       ))}
       {LABELS.map((label, index) => (
         <text
@@ -118,8 +118,9 @@ export function PriceChart({
           x={(x(index * 2) + x(index * 2 + 1)) / 2}
           y={height - 10}
           textAnchor="middle"
-          fontSize="12"
-          fill="#8a5a3b"
+          fontSize="13"
+          fontWeight="700"
+          fill="#6b3e1b"
         >
           {label}
         </text>

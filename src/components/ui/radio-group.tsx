@@ -16,13 +16,13 @@ export function RadioGroupItem({
   return (
     <RadioGroupPrimitive.Item
       className={cn(
-        "aspect-square size-4 shrink-0 rounded-full border border-soil/50 bg-paper outline-none focus-visible:ring-2 focus-visible:ring-leaf disabled:opacity-50 data-[state=checked]:border-leaf",
+        "aspect-square size-5 shrink-0 rounded-full border-[3px] border-orange bg-paper outline-none focus-visible:ring-2 focus-visible:ring-orange-deep disabled:opacity-50 data-[state=checked]:border-white data-[state=checked]:bg-white",
         className,
       )}
       {...props}
     >
       <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
-        <span className="size-2 rounded-full bg-leaf" />
+        <span className="size-2.5 rounded-full bg-orange-deep" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   );

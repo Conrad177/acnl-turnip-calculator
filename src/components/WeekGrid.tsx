@@ -17,14 +17,13 @@ export function WeekGrid({
     <div className="overflow-x-auto">
       <table className="w-full table-fixed border-separate border-spacing-1 text-center">
         <caption className="sr-only">
-          Re-Tail sell prices from Monday morning through Saturday afternoon. Empty cells show the
-          possible range and the likely range.
+          Re-Tail sell prices from Monday morning through Saturday afternoon.
         </caption>
         <thead>
           <tr>
             <th scope="col" className="w-12" />
             {DAYS.map((day) => (
-              <th key={day} scope="col" className="pb-1 text-sm font-semibold text-soil">
+              <th key={day} scope="col" className="pb-1 text-sm font-bold text-ink">
                 {day}
               </th>
             ))}
@@ -33,7 +32,7 @@ export function WeekGrid({
         <tbody>
           {(["Morning", "Afternoon"] as const).map((period, row) => (
             <tr key={period}>
-              <th scope="row" className="pr-1 text-left text-xs font-semibold text-soil">
+              <th scope="row" className="pr-1 text-left text-xs font-bold text-ink">
                 {period === "Morning" ? "AM" : "PM"}
                 <span className="sr-only">
                   {period === "Morning" ? ", before noon" : ", noon onward"}
@@ -56,7 +55,7 @@ export function WeekGrid({
                       aria-invalid={invalid && (sells[index] ?? "") !== ""}
                       aria-describedby={describedBy}
                       onChange={(event) => onChange(index, event.target.value)}
-                      className="h-10 px-1 text-center text-sm tabular-nums"
+                      className="h-11 rounded-2xl px-1 text-center text-sm font-bold tabular-nums"
                     />
                     <p
                       id={describedBy}

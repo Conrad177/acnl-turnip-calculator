@@ -2,10 +2,10 @@ import type { Hint } from "../engine/predict.ts";
 import { cn } from "../lib/utils.ts";
 
 const toneClass = {
-  info: "bg-blush/70 text-ink ring-soil/20",
-  good: "bg-leaf/15 text-leaf-deep ring-leaf/30",
-  warn: "bg-amber-100 text-ink ring-amber-300",
-  bad: "bg-red-50 text-loss ring-loss/30",
+  info: "border-orange bg-cream text-ink",
+  good: "border-leaf bg-[#e8f8dc] text-leaf-deep",
+  warn: "border-orange bg-[#fff3d0] text-ink",
+  bad: "border-loss bg-[#ffe8e4] text-loss",
 } as const;
 
 export function Advice({ hint }: { hint: Hint }) {
@@ -13,10 +13,13 @@ export function Advice({ hint }: { hint: Hint }) {
     <div
       role={hint.tone === "bad" ? "alert" : "status"}
       aria-live="polite"
-      className={cn("rounded-2xl px-4 py-3 ring-1", toneClass[hint.tone])}
+      className={cn(
+        "rounded-[1.75rem] border-[5px] px-5 py-4 shadow-[0_6px_0_0_#c47a28]",
+        toneClass[hint.tone],
+      )}
     >
-      <p className="font-display text-lg font-semibold">{hint.title}</p>
-      <p className="mt-1 text-sm leading-relaxed">{hint.detail}</p>
+      <p className="font-display text-xl font-bold">{hint.title}</p>
+      <p className="mt-1 text-sm leading-relaxed font-semibold">{hint.detail}</p>
     </div>
   );
 }

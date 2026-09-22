@@ -1,4 +1,4 @@
-# Turnip Ledger
+# ACNL Turnip Calculator
 
 A fan-made stalk-market calculator for **Animal Crossing: New Leaf**. Enter Joan's Sunday buy price and the Re-Tail prices you have seen. The ledger shows how likely each pattern is, the possible and likely price in every empty slot, and a short note on whether to sell or wait.
 
@@ -44,10 +44,12 @@ Linux (AppImage and an unpacked binary):
 npm run dist
 ```
 
-The unpacked program is `release/linux-unpacked/turnip-ledger`.
+The unpacked program is `release/linux-unpacked/acnl-turnip-calculator`. The AppImage is `release/ACNL Turnip Calculator-1.0.0.AppImage`.
 
-Windows nsis and portable targets are configured. This environment is Linux, so build them on Windows:
+Windows installer and portable executable (both end in `.exe`, written to `release/`):
 
 ```bash
 npm run dist:win
 ```
+
+`electron-builder --win` runs on Linux. The NSIS installer needs Wine. The portable target does not.
