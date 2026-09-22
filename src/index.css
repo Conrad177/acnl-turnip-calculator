@@ -21,8 +21,11 @@
   --font-sans: "Fredoka", "Trebuchet MS", "Segoe UI", sans-serif;
 }
 
-html {
-  background: var(--color-grass);
+html,
+body {
+  background-color: var(--color-grass);
+  background-image: url("./assets/grass-tile.png");
+  background-repeat: repeat;
 }
 
 body {
@@ -31,14 +34,6 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-weight: 500;
-  background-color: var(--color-grass);
-  background-image:
-    radial-gradient(circle at 8% 12%, #93ee5c 0 140px, transparent 141px),
-    radial-gradient(circle at 92% 6%, #58b82c 0 120px, transparent 121px),
-    radial-gradient(circle at 84% 78%, #8ae652 0 160px, transparent 161px),
-    radial-gradient(circle at 10% 90%, #4eae28 0 130px, transparent 131px),
-    radial-gradient(#ffffff40 1.15px, transparent 1.25px);
-  background-size: auto, auto, auto, auto, 16px 16px;
   background-attachment: fixed;
 }
 
