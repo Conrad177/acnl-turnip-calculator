@@ -19,8 +19,8 @@ describe("emoteForHint", () => {
     expect(emoteForHint(forecastWeek(50, blanks(), "unknown").hint)).toBe("shocked");
   });
 
-  it("uses hopeful while a spike is still possible", () => {
-    expect(emoteForHint(forecastWeek(100, blanks(), "unknown").hint)).toBe("hopeful");
+  it("uses thinking while a spike is still possible", () => {
+    expect(emoteForHint(forecastWeek(100, blanks(), "unknown").hint)).toBe("thinking");
   });
 
   it("maps remaining situations from the hint title", () => {
@@ -32,8 +32,15 @@ describe("emoteForHint", () => {
     expect(emoteForHint(hint({ tone: "good", title: "A large spike is still ahead" }))).toBe(
       "hopeful",
     );
+    expect(emoteForHint(hint({ tone: "good", title: "The small spike is still climbing" }))).toBe(
+      "hopeful",
+    );
     expect(emoteForHint(hint({ tone: "bad", title: "This week cannot pay you back" }))).toBe("sad");
     expect(emoteForHint(hint({ tone: "info", title: "Keep the noon check" }))).toBe("thinking");
+    expect(emoteForHint(hint({ tone: "info", title: "The week is filled in" }))).toBe("thinking");
+    expect(
+      emoteForHint(hint({ tone: "bad", title: "These prices cannot happen together" })),
+    ).toBe("shocked");
   });
 });
 
@@ -60,5 +67,17 @@ describe("emoteForVisit", () => {
     });
     expect(advice).not.toBeNull();
     expect(emoteForVisit(advice!)).toBe("happy");
+  });
+
+  it("uses thinking when both towns pay the same", () => {
+    const advice = visitStay({
+      friendName: "Maple",
+      homeLatest: 120,
+      friendLatest: 120,
+      homeRemainingMax: 120,
+      friendRemainingMax: 140,
+    });
+    expect(advice).not.toBeNull();
+    expect(emoteForVisit(advice!)).toBe("thinking");
   });
 });

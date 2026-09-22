@@ -8,7 +8,7 @@ The address bar holds the week: Joan's price, the twelve Re-Tail figures, last w
 
 You can log a friend's Re-Tail (and their Joan price if they told you) to see whether to visit their town or sell at home. That friend form sits under pattern odds and the price chart. Turnip count uses Joan's price as cost and shows profit or loss in bells.
 
-The price chart defaults to a numbers table (remaining min–max and the likely band). Switch to **Bands** and tap the chart for a larger overlay; tap outside, Close, or Escape to dismiss.
+The price chart defaults to **Bands**. Switch to **Numbers** for an AM/PM table of remaining min–max and the likely band. Tap the band chart for a larger overlay; tap outside, Close, or Escape to dismiss.
 
 This is not affiliated with Nintendo.
 

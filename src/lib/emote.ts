@@ -23,7 +23,7 @@ export function emoteForHint(hint: Hint): EmoteName {
   if (title.includes("large spike is still ahead") || title.includes("still climbing")) {
     return "hopeful";
   }
-  if (title.includes("spike is still possible")) return "hopeful";
+  if (title.includes("spike is still possible")) return "thinking";
   if (
     title.includes("this is the large spike") ||
     title.includes("selling now") ||

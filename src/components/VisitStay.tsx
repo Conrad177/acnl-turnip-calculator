@@ -15,17 +15,15 @@ export function VisitStay({ advice }: { advice: VisitAdvice | null }) {
     <div
       role="status"
       className={cn(
-        "rounded-[1.75rem] border-[5px] px-4 py-4 shadow-[0_6px_0_0_#c47a28] sm:px-5",
+        "overflow-visible rounded-[1.75rem] border-[5px] px-4 py-4 shadow-[0_6px_0_0_#c47a28] sm:px-5",
         toneClass[advice.tone],
       )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3 overflow-visible">
         <StatusEmote name={emoteForVisit(advice)} />
-        <div className="min-w-0 flex-1">
-          <p className="font-display text-xl font-bold leading-tight">{advice.title}</p>
-          <p className="mt-1 text-sm font-semibold leading-relaxed">{advice.detail}</p>
-        </div>
+        <p className="min-w-0 flex-1 font-display text-xl font-bold leading-tight">{advice.title}</p>
       </div>
+      <p className="mt-1 text-sm font-semibold leading-relaxed">{advice.detail}</p>
     </div>
   );
 }

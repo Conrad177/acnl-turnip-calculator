@@ -14,7 +14,7 @@ export function ChartPanel({
   sells: Array<number | null>;
   slots: Array<SlotRange | null>;
 }) {
-  const [view, setView] = useState<"numbers" | "bands">("numbers");
+  const [view, setView] = useState<"numbers" | "bands">("bands");
   const [open, setOpen] = useState(false);
 
   return (

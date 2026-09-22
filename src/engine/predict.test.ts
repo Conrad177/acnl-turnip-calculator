@@ -358,6 +358,27 @@ describe("advice copy", () => {
     expect(forecast.remaining!.guaranteedMin).toBeGreaterThanOrEqual(monday!.min);
   });
 
+  it("keeps Monday 85 at buy 100 as a small-spike lead-in, not decreasing", () => {
+    const forecast = forecastWeek(100, sells([85]), "unknown");
+    expect(forecast.status).toBe("ok");
+    const byId = Object.fromEntries(
+      forecast.chances.map((chance) => [chance.id, chance.probability]),
+    );
+    expect(byId.small).toBeGreaterThan(0.99);
+    expect(byId.decreasing).toBeLessThan(0.01);
+    expect(byId.large).toBeLessThan(0.01);
+    expect(byId.fluctuating).toBeLessThan(0.01);
+  });
+
+  it("allows a 660-bell large-spike peak at Joan 110", () => {
+    const empty = forecastWeek(110, blanks(), "unknown");
+    expect(empty.remaining?.possibleMax).toBe(660);
+    const peak = forecastWeek(110, sells([null, null, null, 660]), "unknown");
+    expect(peak.status).toBe("ok");
+    expect(peak.chances.find((chance) => chance.id === "large")?.probability).toBeGreaterThan(0.9);
+    expect(peak.hint.title.toLowerCase()).toMatch(/large spike/);
+  });
+
   it("hides remaining bounds once the week is filled in", () => {
     const forecast = forecastWeek(
       91,

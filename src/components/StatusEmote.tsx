@@ -9,12 +9,19 @@ export function StatusEmote({
   className?: string;
 }) {
   return (
-    <img
-      src={emoteSrc(name)}
-      alt=""
-      width={56}
-      height={56}
-      className={cn("size-11 shrink-0 object-contain [image-rendering:pixelated] sm:size-12", className)}
-    />
+    <span
+      className={cn(
+        "inline-flex size-12 shrink-0 items-center justify-center overflow-visible sm:size-14",
+        className,
+      )}
+    >
+      <img
+        src={emoteSrc(name)}
+        alt=""
+        width={52}
+        height={52}
+        className="block size-11 object-contain object-center sm:size-12"
+      />
+    </span>
   );
 }
