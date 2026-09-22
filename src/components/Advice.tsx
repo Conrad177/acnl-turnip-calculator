@@ -22,7 +22,7 @@ export function Advice({
       role={hint.tone === "bad" ? "alert" : "status"}
       aria-live="polite"
       className={cn(
-        "overflow-visible rounded-[1.75rem] border-[5px] px-4 py-4 shadow-[0_6px_0_0_#c47a28] sm:px-5",
+        "overflow-visible rounded-[1.75rem] border-[5px] px-4 py-5 shadow-[0_6px_0_0_#c47a28] sm:px-5",
         toneClass[hint.tone],
       )}
     >

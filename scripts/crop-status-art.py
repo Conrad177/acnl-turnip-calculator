@@ -50,13 +50,15 @@ def alpha_centroid(im: Image.Image) -> tuple[float, float]:
 def export_face(sheet: Image.Image, box: tuple[int, int, int, int], dest: Path) -> None:
     x0, y0, x1, y1 = box
     w, h = sheet.size
-    pad = 6
+    pad = 5
     cell = sheet.crop(
         (max(0, x0 - pad), max(0, y0 - pad), min(w, x1 + 1 + pad), min(h, y1 + 1 + pad))
     )
     cw, ch = cell.size
     cx, cy = alpha_centroid(cell)
-    margin = 18
+    # Keep a thin transparent rim so the sticker is not flush with the box,
+    # but fill most of the square so the face stays readable at 48px.
+    margin = 5
     left = cx + margin
     right = cw - cx + margin
     top = cy + margin

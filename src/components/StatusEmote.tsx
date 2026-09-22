@@ -11,16 +11,16 @@ export function StatusEmote({
   return (
     <span
       className={cn(
-        "inline-flex size-12 shrink-0 items-center justify-center overflow-visible sm:size-14",
+        "inline-flex size-12 shrink-0 items-center justify-center overflow-visible rounded-full bg-[#f7e2b0] sm:size-14",
         className,
       )}
     >
       <img
         src={emoteSrc(name)}
         alt=""
-        width={52}
-        height={52}
-        className="block size-11 object-contain object-center sm:size-12"
+        width={48}
+        height={48}
+        className="block size-10 object-contain object-center drop-shadow-[0_1px_0_rgba(107,62,27,0.35)] sm:size-11"
       />
     </span>
   );
