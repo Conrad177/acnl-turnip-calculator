@@ -504,7 +504,7 @@ export function forecastWeek(
       hint: {
         tone: "bad",
         title: "That is not Joan's price",
-        detail: "Joan sells turnips for 90 to 110 bells, and the price stays put until noon.",
+        detail: "Joan sells turnips for 90 to 110 bells.",
         sellTime: null,
       },
     };
