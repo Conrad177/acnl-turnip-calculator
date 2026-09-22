@@ -221,7 +221,7 @@ export default function App() {
 
       <Card>
         <h2 className="font-display mb-3 text-2xl font-bold">Your Re-Tail</h2>
-        <WeekGrid>
+        <WeekGrid
           sells={ledger.sells}
           ranges={ranges}
           invalid={forecast.status === "impossible"}
