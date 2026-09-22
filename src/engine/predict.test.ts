@@ -184,6 +184,61 @@ describe("pattern elimination", () => {
   });
 });
 
+describe("advice copy", () => {
+  it("explains the patterns after Sunday's price when last week is unknown", () => {
+    const forecast = forecastWeek(100, blanks(), "unknown");
+    const text = forecast.hint.detail;
+    expect(forecast.hint.title).toMatch(/spike is still possible/i);
+    expect(text).toMatch(/About 15% of weeks never clear Joan's price \(14\.8% in this model\)/);
+    expect(text.toLowerCase()).toMatch(/rollercoaster/);
+    expect(text.toLowerCase()).toMatch(/does not pay you back/);
+    expect(text.toLowerCase()).toMatch(/third rise/);
+    expect(text.toLowerCase()).toMatch(/fourth rise/);
+    expect(text.toLowerCase()).toMatch(/hedge, not the usual plan/);
+    expect(text.toLowerCase()).not.toContain("ledger");
+  });
+
+  it("uses last week's decreasing chance instead of the unknown 15%", () => {
+    const forecast = forecastWeek(100, blanks(), "decreasing");
+    expect(forecast.hint.detail).toMatch(/5% of weeks never clear Joan's price/);
+    expect(forecast.hint.detail).not.toMatch(/14\.8%/);
+    expect(forecast.hint.detail).not.toMatch(/About 15%/);
+  });
+
+  it("says a skipped half-day leaves the ranges wider", () => {
+    const week = generateWeek(0, 1);
+    const prices = week.prices.map((price, index) => (index === 0 || index > 3 ? null : price));
+    const forecast = forecastWeek(week.basePrice, prices, "unknown");
+    expect(forecast.status).toBe("ok");
+    expect(forecast.hint.detail.toLowerCase()).toMatch(/ranges wider/);
+    expect(forecast.hint.detail.toLowerCase()).not.toMatch(/about \d+ bells/);
+  });
+
+  it("names the large-spike peak half-day once that slot is known", () => {
+    const forecast = forecastWeek(110, sells([99, 110, 182, 627]), "unknown");
+    expect(forecast.status).toBe("ok");
+    expect(forecast.hint.detail).toMatch(/Tuesday afternoon/);
+  });
+
+  it("says Thursday afternoon is the sell on a locked decreasing week", () => {
+    let decreasing = generateWeek(2, 1);
+    for (let seed = 1; seed < 300; seed++) {
+      const candidate = generateWeek(2, seed);
+      if (candidate.pattern === 2) {
+        decreasing = candidate;
+        break;
+      }
+    }
+    const partial = decreasing.prices.map((price, index) => (index < 10 ? price : null));
+    const forecast = forecastWeek(decreasing.basePrice, partial, "unknown");
+    expect(forecast.chances.find((chance) => chance.id === "decreasing")?.probability).toBeGreaterThan(0.9);
+    expect(forecast.hint.detail.toLowerCase()).toMatch(/thursday afternoon/);
+    expect(forecast.hint.detail.toLowerCase()).toMatch(/spike window has shut/);
+    expect(forecast.hint.detail.toLowerCase()).toMatch(/saturday/);
+    expect(forecast.hint.detail.toLowerCase()).toMatch(/does not pay you back/);
+  });
+});
+
 describe("empty week", () => {
   it("waits for Joan's price", () => {
     const forecast = forecastWeek(null, blanks(), "unknown");

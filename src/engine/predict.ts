@@ -374,6 +374,8 @@ interface WeightedBranch {
   pattern: number;
   weight: number;
   pmfs: Float64Array[];
+  /** Half-day index of the spike peak, when this branch has one. */
+  peakSlot?: number;
 }
 
 function collectBranches(base: number, sells: Sell[], prior: number[]): WeightedBranch[] {
@@ -394,7 +396,7 @@ function collectBranches(base: number, sells: Sell[], prior: number[]): Weighted
   for (let peak = 3; peak <= 9; peak++) {
     const result = largeBranch(base, sells, peak);
     const weight = prior[1] * (1 / 7) * result.likelihood;
-    if (weight > 0) found.push({ pattern: 1, weight, pmfs: result.pmfs });
+    if (weight > 0) found.push({ pattern: 1, weight, pmfs: result.pmfs, peakSlot: peak });
   }
 
   const decreasing = decreasingBranch(base, sells);
@@ -406,7 +408,7 @@ function collectBranches(base: number, sells: Sell[], prior: number[]): Weighted
   for (let peak = 2; peak <= 9; peak++) {
     const result = smallBranch(base, sells, peak);
     const weight = prior[3] * (1 / 8) * result.likelihood;
-    if (weight > 0) found.push({ pattern: 3, weight, pmfs: result.pmfs });
+    if (weight > 0) found.push({ pattern: 3, weight, pmfs: result.pmfs, peakSlot: peak + 1 });
   }
 
   return found;
@@ -537,8 +539,96 @@ export function forecastWeek(
     status: "ok",
     chances,
     slots,
-    hint: describeHint(buy, sells, chances, slots),
+    hint: describeHint(buy, sells, chances, slots, previous, branches),
   };
+}
+
+const HALF_DAYS = [
+  "Monday morning",
+  "Monday afternoon",
+  "Tuesday morning",
+  "Tuesday afternoon",
+  "Wednesday morning",
+  "Wednesday afternoon",
+  "Thursday morning",
+  "Thursday afternoon",
+  "Friday morning",
+  "Friday afternoon",
+  "Saturday morning",
+  "Saturday afternoon",
+];
+
+function peakHalfDay(branches: WeightedBranch[], pattern: number): string | null {
+  let sum = 0;
+  const totals = new Map<number, number>();
+  for (const branch of branches) {
+    if (branch.pattern !== pattern || branch.peakSlot == null || !(branch.weight > 0)) continue;
+    totals.set(branch.peakSlot, (totals.get(branch.peakSlot) ?? 0) + branch.weight);
+    sum += branch.weight;
+  }
+  if (!(sum > 0)) return null;
+  let bestSlot = -1;
+  let best = 0;
+  for (const [slot, weight] of totals) {
+    if (weight > best) {
+      best = weight;
+      bestSlot = slot;
+    }
+  }
+  if (bestSlot < 0 || best / sum < 0.95) return null;
+  return HALF_DAYS[bestSlot] ?? null;
+}
+
+function hasSkippedHalfDay(sells: Sell[]): boolean {
+  let missed = false;
+  for (const price of sells) {
+    if (price == null) missed = true;
+    else if (missed) return true;
+  }
+  return false;
+}
+
+function withSkip(detail: string, sells: Sell[]): string {
+  if (!hasSkippedHalfDay(sells)) return detail;
+  return `${detail} A skipped half-day leaves the ranges wider.`;
+}
+
+function neverClears(previous: PreviousChoice): string {
+  if (previous === "unknown") {
+    return "About 15% of weeks never clear Joan's price (14.8% in this model).";
+  }
+  const decreasing = priorFor(previous)[2] ?? 0;
+  const pct = Math.round(decreasing * 1000) / 10;
+  const shown = Number.isInteger(pct) ? `${pct.toFixed(0)}%` : `${pct.toFixed(1)}%`;
+  if (previous === "first") {
+    return `A first week of buying is a small spike, so ${shown} of weeks like this never clear Joan's price.`;
+  }
+  return `With last week recorded as ${PATTERN_NAMES[previous].toLowerCase()}, ${shown} of weeks never clear Joan's price.`;
+}
+
+function hedgeSentence(largeDay: string | null): string {
+  if (largeDay) {
+    const next = HALF_DAYS[HALF_DAYS.indexOf(largeDay) + 1];
+    if (next) {
+      return `A hedge, not the usual plan, is to sell half on ${largeDay} and half on ${next}.`;
+    }
+  }
+  return "A hedge, not the usual plan, is to sell half on the large-spike peak and half on the next half-day.";
+}
+
+function patternSentences(largeDay: string | null, smallDay: string | null): string {
+  const large = largeDay
+    ? `A large spike pays the most on its third rise, ${largeDay}.`
+    : "A large spike pays the most on its third rise.";
+  const small = smallDay
+    ? `A small spike pays the most on its fourth rise, ${smallDay}.`
+    : "A small spike pays the most on its fourth rise.";
+  return [
+    "Fluctuating, also called a rollercoaster, rises and falls more than once.",
+    large,
+    "A decreasing week does not pay you back.",
+    small,
+  ].join(" ");
 }
 
 function describeHint(
@@ -546,10 +636,17 @@ function describeHint(
   sells: Sell[],
   chances: PatternChance[],
   slots: Array<SlotRange | null>,
+  previous: PreviousChoice,
+  branches: WeightedBranch[],
 ): Hint {
   const chance = (id: PatternId) => chances.find((item) => item.id === id)?.probability ?? 0;
+  const bothSpikes = chance("large") > 0.05 && chance("small") > 0.05;
+  const largeDay = peakHalfDay(branches, 1);
+  const smallDay = peakHalfDay(branches, 3);
+  const say = (hint: Hint): Hint => ({ ...hint, detail: withSkip(hint.detail, sells) });
   const entered: number[] = [];
   let latest: number | null = null;
+  let latestIndex: number | null = null;
   let futureMax = -1;
   let futureLikelyMax = -1;
   let openSlots = 0;
@@ -558,6 +655,7 @@ function describeHint(
     if (known != null) {
       entered.push(known);
       latest = known;
+      latestIndex = i;
     } else {
       openSlots++;
       const range = slots[i];
@@ -570,22 +668,37 @@ function describeHint(
 
   if (openSlots === 0) {
     const leader = [...chances].sort((a, b) => b.probability - a.probability)[0];
-    return {
+    const detail =
+      leader?.id === "fluctuating"
+        ? "Fluctuating, also called a rollercoaster, matches the bells you recorded. Turnips spoil at 6:00 AM Sunday."
+        : leader?.id === "decreasing"
+          ? "A decreasing week does not pay you back. Turnips spoil at 6:00 AM Sunday."
+          : `${leader?.name ?? "This pattern"} matches the bells you recorded. Turnips spoil at 6:00 AM Sunday.`;
+    return say({
       tone: "info",
       title: "The week is filled in",
-      detail: `${leader?.name ?? "This pattern"} matches the bells you recorded. Turnips spoil at 6:00 AM Sunday.`,
-    };
+      detail,
+    });
   }
 
   const bestKnown = entered.length > 0 ? Math.max(...entered) : -1;
   const bestPossible = Math.max(bestKnown, futureMax);
 
+  if (chance("decreasing") >= 0.85) {
+    return say({
+      tone: "warn",
+      title: "This is the decreasing pattern",
+      detail:
+        "A decreasing week does not pay you back. Thursday afternoon is the time to sell, because the spike window has shut, and waiting into Saturday deepens the loss.",
+    });
+  }
+
   if (bestPossible < buy) {
-    return {
+    return say({
       tone: "bad",
       title: "This week cannot pay you back",
       detail: `Every price still allowed is under Joan's ${buy}. Sell on your next visit and keep the loss small. Turnips spoil at 6:00 AM Sunday.`,
-    };
+    });
   }
 
   if (
@@ -594,61 +707,64 @@ function describeHint(
     chance("large") >= 0.5 &&
     futureMax < latest
   ) {
-    return {
+    const when = largeDay ?? (latestIndex != null ? HALF_DAYS[latestIndex] : null);
+    const peak = when ? `${when} is the peak` : "This half-day is the peak";
+    return say({
       tone: "good",
       title: "This is the large spike",
-      detail: `${latest} bells is the peak. Later prices step down from here. Sell to Reese before the shop changes price.`,
-    };
+      detail: `${peak}, at ${latest} bells. Later prices step down from here. Sell to Reese before the shop changes price.`,
+    });
   }
 
   if (chance("large") >= 0.45 && futureLikelyMax >= buy * 2) {
-    return {
+    const where = largeDay
+      ? `A large spike pays the most on its third rise, ${largeDay}.`
+      : "A large spike pays the most on its third rise, and that half-day can still land as late as Friday afternoon.";
+    const hedge = bothSpikes ? ` ${hedgeSentence(largeDay)}` : "";
+    return say({
       tone: "good",
       title: "A large spike is still ahead",
-      detail:
-        "Hold the turnips. The high price lands on the third rise, and it can still show up through Friday afternoon.",
-    };
+      detail: `${neverClears(previous)} Hold the turnips. ${where}${hedge}`,
+    });
   }
 
   if (latest != null && futureMax <= latest && latest >= buy) {
-    return {
+    const roller =
+      chance("fluctuating") >= 0.5
+        ? "Fluctuating, also called a rollercoaster, is as high as the rest of the week gets."
+        : `${latest} bells is as high as the rest of the week gets.`;
+    return say({
       tone: "good",
       title: "Selling now locks the gain",
-      detail: `${latest} bells is as high as the rest of the week gets. Reese is paying that price until the next change.`,
-    };
+      detail: `${roller} Reese is paying that price until the next change.`,
+    });
   }
 
   if (chance("small") >= 0.5 && futureLikelyMax > (latest ?? 0) && futureMax > buy) {
-    return {
+    const where = smallDay
+      ? `A small spike pays the most on its fourth rise, ${smallDay}.`
+      : "A small spike pays the most on its fourth rise. Check again at noon, or tomorrow morning, before you sell.";
+    const hedge = bothSpikes ? ` ${hedgeSentence(largeDay)}` : "";
+    return say({
       tone: "good",
       title: "The small spike is still climbing",
-      detail:
-        "The best price is the fourth rise. Check again at noon, or tomorrow morning, before you sell.",
-    };
-  }
-
-  if (chance("decreasing") >= 0.85) {
-    return {
-      tone: "warn",
-      title: "This is the decreasing pattern",
-      detail:
-        "The price keeps easing down. A spike would already have started by Thursday afternoon. Sell on the next visit.",
-    };
+      detail: `${neverClears(previous)} ${where}${hedge}`,
+    });
   }
 
   if (chance("large") + chance("small") > 0.05 && futureMax > buy) {
-    return {
+    const hedge = bothSpikes ? ` ${hedgeSentence(largeDay)}` : "";
+    return say({
       tone: "info",
       title: "A spike is still possible",
-      detail:
-        "Keep both daily prices. An increase can still begin as late as Thursday afternoon, and the pattern gets much clearer after two rises in a row.",
-    };
+      detail: `${neverClears(previous)} ${patternSentences(largeDay, smallDay)}${hedge}`,
+    });
   }
 
-  return {
+  return say({
     tone: "info",
     title: "Keep the noon check",
     detail:
       "Re-Tail changes price when the shop opens and again at noon. One more number will narrow the pattern.",
-  };
+  });
 }
