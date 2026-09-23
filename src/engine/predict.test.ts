@@ -346,6 +346,22 @@ describe("advice copy", () => {
     expect(forecast.hint.sellTime).toBeNull();
   });
 
+  it("sells now when only fluctuating remains and 132 is the high in hand", () => {
+    const forecast = forecastWeek(95, sells([null, 116, null, 56, null, 132]), "unknown");
+    expect(forecast.status).toBe("ok");
+    const byId = Object.fromEntries(
+      forecast.chances.map((chance) => [chance.id, chance.probability]),
+    );
+    expect(byId.fluctuating).toBeGreaterThan(0.99);
+    expect(byId.large).toBeLessThan(0.01);
+    expect(byId.small).toBeLessThan(0.01);
+    expect(forecast.hint.sellTime).toBe("now");
+    expect(forecast.hint.title.toLowerCase()).toMatch(/selling now locks the gain/);
+    expect(forecast.hint.detail.toLowerCase()).toMatch(/132/);
+    expect(forecast.hint.detail.toLowerCase()).not.toMatch(/noon check/);
+    expect(forecast.hint.detail.toLowerCase()).not.toMatch(/ranges wider/);
+  });
+
   it("surfaces a week-level guaranteed min and possible max for remaining slots", () => {
     const forecast = forecastWeek(100, blanks(), "unknown");
     expect(forecast.remaining).not.toBeNull();

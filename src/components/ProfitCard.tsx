@@ -40,9 +40,11 @@ export function ProfitCard({
     lines.push(
       `If home still only reaches ${remaining.guaranteedMin}: ${formatBells(profitBells(count, buy, remaining.guaranteedMin))}`,
     );
-    lines.push(
-      `If home reaches ${remaining.possibleMax}: ${formatBells(profitBells(count, buy, remaining.possibleMax))}`,
-    );
+    if (sellTime !== "now") {
+      lines.push(
+        `If home reaches ${remaining.possibleMax}: ${formatBells(profitBells(count, buy, remaining.possibleMax))}`,
+      );
+    }
   }
   const namedSlot = slotFromSellTime(sellTime);
   if (sellTime === "now" && latestHome != null) {

@@ -549,7 +549,7 @@ export function forecastWeek(
   }
 
   const chances = chancesFromMass(mass);
-  const remaining = remainingBounds(sells, slots, branches);
+  const remaining = remainingBounds(sells, slots, branches, lastKnownIndex(sells));
   return {
     status: "ok",
     chances,
@@ -572,19 +572,30 @@ function pmfFloor(pmf: Float64Array): number {
   return -1;
 }
 
+function lastKnownIndex(sells: Sell[]): number | null {
+  let index: number | null = null;
+  for (let i = 0; i < 12; i++) {
+    if (sells[i] != null) index = i;
+  }
+  return index;
+}
+
 /**
  * Guaranteed min is the worst-case peak still left in remaining slots:
  * each matching week will print at least that many bells at some open
  * half-day. Possible max is the highest remaining cell.
+ * Past skipped half-days are not remaining; you cannot sell those now.
  */
 function remainingBounds(
   sells: Sell[],
   slots: Array<SlotRange | null>,
   branches: WeightedBranch[],
+  afterSlot: number | null,
 ): RemainingBounds | null {
+  const start = afterSlot == null ? 0 : afterSlot + 1;
   let possibleMax = -1;
   let open = 0;
-  for (let slot = 0; slot < 12; slot++) {
+  for (let slot = start; slot < 12; slot++) {
     if (sells[slot] != null) continue;
     open++;
     const range = slots[slot];
@@ -596,7 +607,7 @@ function remainingBounds(
   for (const branch of branches) {
     if (!(branch.weight > 0)) continue;
     let peakFloor = -1;
-    for (let slot = 0; slot < 12; slot++) {
+    for (let slot = start; slot < 12; slot++) {
       if (sells[slot] != null) continue;
       peakFloor = Math.max(peakFloor, pmfFloor(branch.pmfs[slot]));
     }
@@ -604,7 +615,9 @@ function remainingBounds(
   }
   if (!Number.isFinite(guaranteedMin)) {
     const mins = slots
-      .map((range, index) => (sells[index] == null && range ? range.min : null))
+      .map((range, index) =>
+        index >= start && sells[index] == null && range ? range.min : null,
+      )
       .filter((value): value is number => value != null);
     if (mins.length === 0) return null;
     guaranteedMin = Math.min(...mins);
@@ -728,7 +741,7 @@ function describeHint(
   const smallDay = peakHalfDay(branches, 3);
   const say = (hint: Omit<Hint, "sellTime">, sellTime: string | null): Hint => ({
     ...hint,
-    detail: withSkip(hint.detail, sells),
+    detail: sellTime === "now" ? hint.detail : withSkip(hint.detail, sells),
     sellTime,
   });
   const oneSpikeDay = (): string | null => {
@@ -751,11 +764,15 @@ function describeHint(
       latestIndex = i;
     } else {
       openSlots++;
-      const range = slots[i];
-      if (range) {
-        futureMax = Math.max(futureMax, range.max);
-        futureLikelyMax = Math.max(futureLikelyMax, range.likelyMax);
-      }
+    }
+  }
+  const forwardFrom = latestIndex == null ? 0 : latestIndex + 1;
+  for (let i = forwardFrom; i < 12; i++) {
+    if (sells[i] != null) continue;
+    const range = slots[i];
+    if (range) {
+      futureMax = Math.max(futureMax, range.max);
+      futureLikelyMax = Math.max(futureLikelyMax, range.likelyMax);
     }
   }
 
@@ -838,7 +855,7 @@ function describeHint(
     );
   }
 
-  if (latest != null && futureMax <= latest && latest >= buy) {
+  if (latest != null && latest >= buy && futureMax <= latest) {
     const peakDay =
       chance("small") >= 0.5 && smallDay
         ? smallDay
@@ -855,6 +872,26 @@ function describeHint(
         tone: "good",
         title: "Selling now locks the gain",
         detail: `${named}${roller} Reese is paying that price until the next change.`,
+      },
+      "now",
+    );
+  }
+
+  if (
+    latest != null &&
+    latest >= buy &&
+    chance("large") + chance("small") <= 0.05 &&
+    futureLikelyMax <= latest
+  ) {
+    const ceiling =
+      futureMax > latest
+        ? ` A later fluctuating high can still print ${futureMax}, but the likely remaining band is under ${latest}.`
+        : "";
+    return say(
+      {
+        tone: "good",
+        title: "Selling now locks the gain",
+        detail: `Fluctuating, also called a rollercoaster, is as high as the rest of the week is likely to get.${ceiling} Reese is paying ${latest} until the next change.`,
       },
       "now",
     );
