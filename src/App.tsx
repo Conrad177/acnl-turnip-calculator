@@ -20,6 +20,7 @@ import {
   latestKnown,
   startNextWeek,
   visitStay,
+  withFriendGuide,
 } from "./lib/extras.ts";
 import { mergeShare, parseShare, serializeShare, shareHref } from "./lib/share.ts";
 import { readLedger, writeLedger, type LedgerState } from "./lib/storage.ts";
@@ -94,6 +95,14 @@ export default function App() {
     friendLatest: friendLatest.price,
     homeRemainingMax: forecast.remaining?.possibleMax ?? null,
     friendRemainingMax: friendForecast.remaining?.possibleMax ?? null,
+    homeRemainingLikelyMax: forecast.remaining?.likelyMax ?? null,
+    friendRemainingLikelyMax: friendForecast.remaining?.likelyMax ?? null,
+  });
+  const guided = withFriendGuide(forecast.hint, {
+    friendName: ledger.friend.name,
+    homeLatest: homeLatest.price,
+    friendLatest: friendLatest.price,
+    remaining: forecast.remaining,
   });
 
   const canStartNext = ledger.buy !== "" || ledger.sells.some((value) => value !== "");
@@ -202,7 +211,9 @@ export default function App() {
         </div>
       </Card>
 
-      <Advice hint={forecast.hint} remaining={forecast.remaining} />
+      <Advice hint={guided} remaining={forecast.remaining} />
+
+      {guided.title.toLowerCase().startsWith("sell in") ? null : <VisitStay advice={visit} />}
 
       <ProfitCard
         countRaw={ledger.count}
@@ -211,7 +222,7 @@ export default function App() {
         latestFriend={friendLatest.price}
         friendName={ledger.friend.name}
         remaining={forecast.remaining}
-        sellTime={forecast.hint.sellTime}
+        sellTime={guided.sellTime}
         homeSells={sells}
         homeRanges={ranges}
       />
@@ -248,8 +259,6 @@ export default function App() {
           <ChartPanel buy={chartBuy} sells={sells} slots={ranges} />
         </Card>
       </div>
-
-      <VisitStay advice={visit} />
 
       <Card>
         <h2 className="font-display mb-1 text-2xl font-bold">Friend's Re-Tail</h2>

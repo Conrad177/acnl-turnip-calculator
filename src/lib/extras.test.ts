@@ -7,6 +7,8 @@ import {
   profitBells,
   startNextWeek,
   visitStay,
+  withFriendGuide,
+  betterNowTown,
 } from "./extras.ts";
 import { forecastWeek } from "../engine/predict.ts";
 import { blankLedger } from "./storage.ts";
@@ -66,6 +68,54 @@ describe("visit or stay", () => {
         friendRemainingMax: null,
       }),
     ).toBeNull();
+  });
+
+  it("does not promise a later visit when the friend's likely band cannot beat home", () => {
+    const advice = visitStay({
+      friendName: "Maple",
+      homeLatest: 132,
+      friendLatest: 100,
+      homeRemainingMax: 133,
+      friendRemainingMax: 140,
+      friendRemainingLikelyMax: 127,
+    });
+    expect(advice?.title).toMatch(/Stay home/);
+    expect(advice?.detail).not.toMatch(/later visit could still win/);
+  });
+});
+
+describe("friend sell guide", () => {
+  it("sells in the friend's town when that price beats home remaining", () => {
+    const home = forecastWeek(95, [null, 116, null, 56, null, 132, null, null, null, null, null, null], "unknown");
+    const guided = withFriendGuide(home.hint, {
+      friendName: "Maple",
+      homeLatest: 132,
+      friendLatest: 200,
+      remaining: home.remaining,
+    });
+    expect(home.hint.sellTime).toBe("now");
+    expect(guided.title).toMatch(/Sell in Maple now/);
+    expect(guided.sellTime).toBe("now");
+    expect(guided.detail).toMatch(/200 vs 132/);
+  });
+
+  it("keeps a home spike hold when the friend cannot beat remaining", () => {
+    const home = forecastWeek(110, [99, 110, 182, null, null, null, null, null, null, null, null, null], "unknown");
+    expect(home.hint.title.toLowerCase()).toMatch(/still ahead/);
+    const guided = withFriendGuide(home.hint, {
+      friendName: "Maple",
+      homeLatest: 182,
+      friendLatest: 200,
+      remaining: home.remaining,
+    });
+    expect(home.remaining?.possibleMax ?? 0).toBeGreaterThan(200);
+    expect(guided.title).toBe(home.hint.title);
+    expect(guided.sellTime).toBe(home.hint.sellTime);
+  });
+
+  it("picks the friend's price for a now sell", () => {
+    expect(betterNowTown(132, 200)).toEqual({ where: "friend", price: 200 });
+    expect(betterNowTown(132, 100)).toEqual({ where: "home", price: 132 });
   });
 });
 

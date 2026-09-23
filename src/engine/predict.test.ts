@@ -298,7 +298,7 @@ describe("advice copy", () => {
     expect(forecast.hint.detail).toMatch(/178/);
   });
 
-  it("says Thursday afternoon is the sell on a locked decreasing week", () => {
+  it("says sell now on a locked decreasing week", () => {
     let decreasing = generateWeek(2, 1);
     for (let seed = 1; seed < 300; seed++) {
       const candidate = generateWeek(2, seed);
@@ -310,11 +310,10 @@ describe("advice copy", () => {
     const partial = decreasing.prices.map((price, index) => (index < 10 ? price : null));
     const forecast = forecastWeek(decreasing.basePrice, partial, "unknown");
     expect(forecast.chances.find((chance) => chance.id === "decreasing")?.probability).toBeGreaterThan(0.9);
-    expect(forecast.hint.detail.toLowerCase()).toMatch(/thursday afternoon/);
-    expect(forecast.hint.detail.toLowerCase()).toMatch(/spike window has shut/);
-    expect(forecast.hint.detail.toLowerCase()).toMatch(/saturday/);
     expect(forecast.hint.detail.toLowerCase()).toMatch(/does not pay you back/);
     expect(forecast.hint.sellTime).toBe("now");
+    expect(forecast.hint.detail.toLowerCase()).toMatch(/sell now/);
+    expect(forecast.hint.detail.toLowerCase()).not.toMatch(/thursday afternoon is the time/);
   });
 
   it("names the large-spike peak half-day before that price is typed", () => {
@@ -362,6 +361,50 @@ describe("advice copy", () => {
     expect(forecast.hint.detail.toLowerCase()).not.toMatch(/ranges wider/);
   });
 
+  it("does not pin a half-day to a small spike that is only a sliver", () => {
+    const forecast = forecastWeek(100, sells([95]), "unknown");
+    expect(forecast.hint.sellTime).toBeNull();
+    expect(forecast.chances.find((chance) => chance.id === "small")?.probability ?? 1).toBeLessThan(0.2);
+    expect(forecast.hint.detail.toLowerCase()).not.toMatch(/tuesday afternoon/);
+  });
+
+  it("does not quote the Sunday never-clears rate after a small spike is locked", () => {
+    const forecast = forecastWeek(100, sells([50]), "unknown");
+    expect(forecast.chances.find((chance) => chance.id === "small")?.probability).toBe(1);
+    expect(forecast.hint.detail).not.toMatch(/14\.8%/);
+    expect(forecast.hint.detail).not.toMatch(/About 15%/);
+    expect(forecast.hint.title.toLowerCase()).toMatch(/still climbing/);
+  });
+
+  it("sells now after the large-spike peak even when the crash is still above remaining", () => {
+    const forecast = forecastWeek(110, sells([97, 93, 88, 83, 142, 202, 261, 184, 104]), "unknown");
+    expect(forecast.status).toBe("ok");
+    expect(forecast.chances.find((chance) => chance.id === "large")?.probability).toBeGreaterThan(0.99);
+    expect(forecast.hint.sellTime).toBe("now");
+    expect(forecast.hint.title.toLowerCase()).not.toMatch(/noon check/);
+    expect(forecast.remaining!.possibleMax).toBeLessThan(104);
+  });
+
+  it("holds a locked fluctuating week that is still on a low", () => {
+    const forecast = forecastWeek(95, sells([null, 116, null, 56]), "unknown");
+    expect(forecast.chances.find((chance) => chance.id === "fluctuating")?.probability).toBeGreaterThan(0.99);
+    expect(forecast.hint.sellTime).toBeNull();
+    expect(forecast.hint.title.toLowerCase()).toMatch(/noon check/);
+    expect(forecast.hint.detail.toLowerCase()).toMatch(/remaining highs can still beat 56/);
+    expect(forecast.hint.detail.toLowerCase()).not.toMatch(/narrow the pattern/);
+  });
+
+  it("holds through a post-peak tail that can still beat the price in hand", () => {
+    const forecast = forecastWeek(
+      110,
+      sells([97, 93, 88, 83, 142, 202, 261, 184, 104, 79, 73]),
+      "unknown",
+    );
+    expect(forecast.hint.sellTime).not.toBe("now");
+    expect(forecast.remaining!.possibleMax).toBeGreaterThan(73);
+    expect(forecast.hint.title.toLowerCase()).toMatch(/cannot pay you back|noon check/);
+  });
+
   it("surfaces a week-level guaranteed min and possible max for remaining slots", () => {
     const forecast = forecastWeek(100, blanks(), "unknown");
     expect(forecast.remaining).not.toBeNull();
@@ -384,6 +427,10 @@ describe("advice copy", () => {
     expect(byId.decreasing).toBeLessThan(0.01);
     expect(byId.large).toBeLessThan(0.01);
     expect(byId.fluctuating).toBeLessThan(0.01);
+    expect(forecast.remaining).not.toBeNull();
+    expect(forecast.remaining!.possibleMax).toBeLessThanOrEqual(200);
+    expect(forecast.remaining!.guaranteedMin).toBeGreaterThanOrEqual(140);
+    expect(forecast.hint.title.toLowerCase()).toMatch(/still climbing/);
   });
 
   it("allows a 660-bell large-spike peak at Joan 110", () => {

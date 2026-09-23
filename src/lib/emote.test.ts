@@ -29,6 +29,10 @@ describe("emoteForHint", () => {
     );
     expect(emoteForHint(hint({ tone: "good", title: "This is the large spike" }))).toBe("happy");
     expect(emoteForHint(hint({ tone: "good", title: "Selling now locks the gain" }))).toBe("happy");
+    expect(emoteForHint(hint({ tone: "good", title: "Sell in Maple now" }))).toBe("smug");
+    expect(emoteForHint(hint({ tone: "warn", title: "Sell now before it drops again" }))).toBe(
+      "worried",
+    );
     expect(emoteForHint(hint({ tone: "good", title: "A large spike is still ahead" }))).toBe(
       "hopeful",
     );

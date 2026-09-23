@@ -33,6 +33,8 @@ export interface Hint {
 export interface RemainingBounds {
   guaranteedMin: number;
   possibleMax: number;
+  /** Highest remaining 90th-percentile cell, after the last typed price. */
+  likelyMax: number;
 }
 
 export interface Forecast {
@@ -422,6 +424,16 @@ function collectBranches(base: number, sells: Sell[], prior: number[]): Weighted
   return found;
 }
 
+/** Drop numeric-dust branches so remaining ranges match the pattern call. */
+function significantBranches(branches: WeightedBranch[]): WeightedBranch[] {
+  let total = 0;
+  for (const branch of branches) total += branch.weight;
+  if (!(total > 0)) return branches;
+  const dust = total * 1e-3;
+  const kept = branches.filter((branch) => branch.weight > dust);
+  return kept.length > 0 ? kept : branches;
+}
+
 function percentile(hist: Float64Array, total: number, p: number, cutoff: number): number {
   const target = total * p;
   let acc = 0;
@@ -531,6 +543,7 @@ export function forecastWeek(
     };
   }
 
+  const visible = significantBranches(branches);
   const slots: Array<SlotRange | null> = [];
   for (let slot = 0; slot < 12; slot++) {
     if (sells[slot] != null) {
@@ -538,7 +551,7 @@ export function forecastWeek(
       continue;
     }
     const hist = new Float64Array(CAP);
-    for (const branch of branches) {
+    for (const branch of visible) {
       const pmf = branch.pmfs[slot];
       for (let price = 0; price < CAP; price++) {
         const p = pmf[price];
@@ -549,7 +562,7 @@ export function forecastWeek(
   }
 
   const chances = chancesFromMass(mass);
-  const remaining = remainingBounds(sells, slots, branches, lastKnownIndex(sells));
+  const remaining = remainingBounds(sells, slots, visible, lastKnownIndex(sells));
   return {
     status: "ok",
     chances,
@@ -594,12 +607,16 @@ function remainingBounds(
 ): RemainingBounds | null {
   const start = afterSlot == null ? 0 : afterSlot + 1;
   let possibleMax = -1;
+  let likelyMax = -1;
   let open = 0;
   for (let slot = start; slot < 12; slot++) {
     if (sells[slot] != null) continue;
     open++;
     const range = slots[slot];
-    if (range) possibleMax = Math.max(possibleMax, range.max);
+    if (range) {
+      possibleMax = Math.max(possibleMax, range.max);
+      likelyMax = Math.max(likelyMax, range.likelyMax);
+    }
   }
   if (open === 0 || possibleMax < 0) return null;
 
@@ -622,7 +639,11 @@ function remainingBounds(
     if (mins.length === 0) return null;
     guaranteedMin = Math.min(...mins);
   }
-  return { guaranteedMin, possibleMax };
+  return {
+    guaranteedMin,
+    possibleMax,
+    likelyMax: likelyMax >= 0 ? likelyMax : possibleMax,
+  };
 }
 
 export const HALF_DAYS = [
@@ -709,7 +730,7 @@ function patternSentences(
   }
   if (chance("large") > 0.01) {
     parts.push(
-      largeDay
+      chance("large") >= 0.45 && largeDay
         ? `A large spike pays the most on its third rise, ${largeDay}.`
         : "A large spike pays the most on its third rise.",
     );
@@ -719,12 +740,25 @@ function patternSentences(
   }
   if (chance("small") > 0.01) {
     parts.push(
-      smallDay
+      chance("small") >= 0.5 && smallDay
         ? `A small spike pays the most on its fourth rise, ${smallDay}.`
         : "A small spike pays the most on its fourth rise.",
     );
   }
   return parts.join(" ");
+}
+
+function riskPrefix(previous: PreviousChoice, chance: (id: PatternId) => number): string {
+  if (previous === "first") return `${neverClears(previous)} `;
+  if (chance("decreasing") >= 0.01) return `${neverClears(previous)} `;
+  return "";
+}
+
+function sellNowHint(latest: number, buy: number, detail: string): Omit<Hint, "sellTime"> {
+  if (latest >= buy) {
+    return { tone: "good", title: "Selling now locks the gain", detail };
+  }
+  return { tone: "warn", title: "Sell now before it drops again", detail };
 }
 
 function describeHint(
@@ -794,31 +828,23 @@ function describeHint(
     );
   }
 
-  const bestKnown = entered.length > 0 ? Math.max(...entered) : -1;
-  const bestPossible = Math.max(bestKnown, futureMax);
+  const risk = riskPrefix(previous, chance);
 
   if (chance("decreasing") >= 0.85) {
-    const sellTime =
-      latestIndex != null && latestIndex >= 7 ? "now" : "Thursday afternoon";
+    const remainingCannotBeat = latest != null && futureMax >= 0 && futureMax <= latest;
+    const pastWindow = latestIndex != null && latestIndex >= 7;
+    const sellTime = remainingCannotBeat || pastWindow ? "now" : "Thursday afternoon";
+    const detail =
+      sellTime === "now"
+        ? "A decreasing week does not pay you back. Sell now; later half-days only go lower."
+        : "A decreasing week does not pay you back. Thursday afternoon is the time to sell, because the spike window has shut, and waiting into Saturday deepens the loss.";
     return say(
       {
         tone: "warn",
         title: "This is the decreasing pattern",
-        detail:
-          "A decreasing week does not pay you back. Thursday afternoon is the time to sell, because the spike window has shut, and waiting into Saturday deepens the loss.",
+        detail,
       },
       sellTime,
-    );
-  }
-
-  if (bestPossible < buy) {
-    return say(
-      {
-        tone: "bad",
-        title: "This week cannot pay you back",
-        detail: `Every price still allowed is under Joan's ${buy}. Sell on your next visit and keep the loss small. Turnips spoil at 6:00 AM Sunday.`,
-      },
-      latest != null ? "now" : null,
     );
   }
 
@@ -849,13 +875,13 @@ function describeHint(
       {
         tone: "good",
         title: "A large spike is still ahead",
-        detail: `${neverClears(previous)} Hold the turnips. ${where}${hedge}`,
+        detail: `${risk}Hold the turnips. ${where}${hedge}`,
       },
       largeDay,
     );
   }
 
-  if (latest != null && latest >= buy && futureMax <= latest) {
+  if (latest != null && futureMax >= 0 && futureMax <= latest) {
     const peakDay =
       chance("small") >= 0.5 && smallDay
         ? smallDay
@@ -868,18 +894,18 @@ function describeHint(
         ? "Fluctuating, also called a rollercoaster, is as high as the rest of the week gets."
         : `${latest} bells is as high as the rest of the week gets.`;
     return say(
-      {
-        tone: "good",
-        title: "Selling now locks the gain",
-        detail: `${named}${roller} Reese is paying that price until the next change.`,
-      },
+      sellNowHint(
+        latest,
+        buy,
+        `${named}${roller} Reese is paying that price until the next change.`,
+      ),
       "now",
     );
   }
 
   if (
     latest != null &&
-    latest >= buy &&
+    futureLikelyMax >= 0 &&
     chance("large") + chance("small") <= 0.05 &&
     futureLikelyMax <= latest
   ) {
@@ -888,11 +914,11 @@ function describeHint(
         ? ` A later fluctuating high can still print ${futureMax}, but the likely remaining band is under ${latest}.`
         : "";
     return say(
-      {
-        tone: "good",
-        title: "Selling now locks the gain",
-        detail: `Fluctuating, also called a rollercoaster, is as high as the rest of the week is likely to get.${ceiling} Reese is paying ${latest} until the next change.`,
-      },
+      sellNowHint(
+        latest,
+        buy,
+        `Fluctuating, also called a rollercoaster, is as high as the rest of the week is likely to get.${ceiling} Reese is paying ${latest} until the next change.`,
+      ),
       "now",
     );
   }
@@ -906,7 +932,7 @@ function describeHint(
       {
         tone: "good",
         title: "The small spike is still climbing",
-        detail: `${neverClears(previous)} ${where}${hedge}`,
+        detail: `${risk}${where}${hedge}`,
       },
       smallDay,
     );
@@ -918,19 +944,47 @@ function describeHint(
       {
         tone: "info",
         title: "A spike is still possible",
-        detail: `${neverClears(previous)} ${patternSentences(chance, largeDay, smallDay)}${hedge}`,
+        detail: `${risk}${patternSentences(chance, largeDay, smallDay)}${hedge}`,
       },
       oneSpikeDay(),
     );
   }
 
+  const stillAhead = latest != null && futureMax > latest;
+  const underJoan = Math.max(latest ?? -1, futureMax) < buy;
+
+  if (underJoan && stillAhead) {
+    return say(
+      {
+        tone: "bad",
+        title: "This week cannot pay you back",
+        detail: `Every price still allowed is under Joan's ${buy}. Later half-days can still beat ${latest}, so check again to keep the loss small. Turnips spoil at 6:00 AM Sunday.`,
+      },
+      null,
+    );
+  }
+
+  if (underJoan) {
+    return say(
+      {
+        tone: "bad",
+        title: "This week cannot pay you back",
+        detail: `Every price still allowed is under Joan's ${buy}. Sell on your next visit and keep the loss small. Turnips spoil at 6:00 AM Sunday.`,
+      },
+      latest != null ? "now" : null,
+    );
+  }
+
   if (chance("fluctuating") >= 0.5) {
+    const locked = chance("fluctuating") >= 0.95;
+    const detail = locked
+      ? `Fluctuating, also called a rollercoaster, rises and falls more than once. Remaining highs can still beat ${latest}. Re-Tail changes price when the shop opens and again at noon.`
+      : "Fluctuating, also called a rollercoaster, rises and falls more than once. Re-Tail changes price when the shop opens and again at noon. One more number will narrow the pattern.";
     return say(
       {
         tone: "info",
         title: "Keep the noon check",
-        detail:
-          "Fluctuating, also called a rollercoaster, rises and falls more than once. Re-Tail changes price when the shop opens and again at noon. One more number will narrow the pattern.",
+        detail,
       },
       null,
     );
@@ -940,8 +994,9 @@ function describeHint(
     {
       tone: "info",
       title: "Keep the noon check",
-      detail:
-        "Re-Tail changes price when the shop opens and again at noon. One more number will narrow the pattern.",
+      detail: stillAhead
+        ? `Later half-days can still print up to ${futureMax}. Re-Tail changes price when the shop opens and again at noon.`
+        : "Re-Tail changes price when the shop opens and again at noon. One more number will narrow the pattern.",
     },
     null,
   );

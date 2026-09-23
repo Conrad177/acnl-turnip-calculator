@@ -1,5 +1,5 @@
 import { PATTERN_IDS, PATTERN_NAMES, type PatternId, type PreviousChoice } from "../engine/patterns.ts";
-import type { Forecast } from "../engine/predict.ts";
+import type { Forecast, Hint, RemainingBounds } from "../engine/predict.ts";
 import { HALF_DAYS } from "../engine/predict.ts";
 import {
   blankSells,
@@ -103,6 +103,8 @@ export function visitStay(args: {
   friendLatest: number | null;
   homeRemainingMax: number | null;
   friendRemainingMax: number | null;
+  homeRemainingLikelyMax?: number | null;
+  friendRemainingLikelyMax?: number | null;
 }): VisitAdvice | null {
   const name = args.friendName.trim() || "your friend's town";
   if (args.friendLatest == null) return null;
@@ -119,6 +121,7 @@ export function visitStay(args: {
   const home = args.homeLatest;
   const friend = args.friendLatest;
   const diff = Math.abs(friend - home);
+  const friendLikely = args.friendRemainingLikelyMax ?? null;
 
   if (friend > home) {
     const homeCanBeat =
@@ -133,13 +136,12 @@ export function visitStay(args: {
   }
 
   if (home > friend) {
-    const friendCanBeat =
-      args.friendRemainingMax != null && args.friendRemainingMax > home;
+    const friendCanBeat = friendLikely != null ? friendLikely > home : args.friendRemainingMax != null && args.friendRemainingMax > home;
     return {
       tone: "info",
       title: "Stay home",
       detail: friendCanBeat
-        ? `Your Re-Tail is ${home} vs ${friend} in ${name} (−${diff}). Their remaining max is ${args.friendRemainingMax}, so a later visit could still win.`
+        ? `Your Re-Tail is ${home} vs ${friend} in ${name} (−${diff}). Their remaining likely high is ${friendLikely ?? args.friendRemainingMax}, so a later visit could still win.`
         : `Your Re-Tail is ${home} vs ${friend} in ${name} (−${diff}). Reese is paying more in your town.`,
     };
   }
@@ -149,6 +151,45 @@ export function visitStay(args: {
     title: "Same price either town",
     detail: `Reese is paying ${home} at home and in ${name}. Stay, unless you were going anyway.`,
   };
+}
+
+/** When the friend's Re-Tail is clearly better than home, the main sell guide says so. */
+export function withFriendGuide(
+  hint: Hint,
+  args: {
+    friendName: string;
+    homeLatest: number | null;
+    friendLatest: number | null;
+    remaining: RemainingBounds | null;
+  },
+): Hint {
+  const name = args.friendName.trim() || "your friend's town";
+  const friend = args.friendLatest;
+  const home = args.homeLatest;
+  if (friend == null || home == null || friend <= home) return hint;
+  const homeCap = args.remaining?.possibleMax ?? home;
+  const sellingNow = hint.sellTime === "now";
+  const friendBeatsHomeFuture = friend >= homeCap;
+  if (!sellingNow && !friendBeatsHomeFuture) return hint;
+  return {
+    tone: "good",
+    title: `Sell in ${name} now`,
+    sellTime: "now",
+    detail: friendBeatsHomeFuture
+      ? `Their Re-Tail is ${friend} vs ${home} at home. That beats anything still left in your town. Take the train before Reese changes price.`
+      : `Their Re-Tail is ${friend} vs ${home} at home. You are selling now, and they pay more.`,
+  };
+}
+
+export function betterNowTown(
+  home: number | null,
+  friend: number | null,
+): { where: "home" | "friend"; price: number } | null {
+  if (friend != null && (home == null || friend > home)) {
+    return { where: "friend", price: friend };
+  }
+  if (home != null) return { where: "home", price: home };
+  return null;
 }
 
 export function patternLabel(pattern: PatternId | "unknown"): string {

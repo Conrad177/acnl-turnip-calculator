@@ -1,6 +1,12 @@
 import type { RemainingBounds } from "../engine/predict.ts";
 import { HALF_DAYS } from "../engine/predict.ts";
-import { formatBells, parseCount, profitBells, slotFromSellTime } from "../lib/extras.ts";
+import {
+  betterNowTown,
+  formatBells,
+  parseCount,
+  profitBells,
+  slotFromSellTime,
+} from "../lib/extras.ts";
 
 export function ProfitCard({
   countRaw,
@@ -47,8 +53,15 @@ export function ProfitCard({
     }
   }
   const namedSlot = slotFromSellTime(sellTime);
-  if (sellTime === "now" && latestHome != null) {
-    lines.push(`Best guess sell time is now: ${formatBells(profitBells(count, buy, latestHome))}`);
+  if (sellTime === "now") {
+    const best = betterNowTown(latestHome, latestFriend);
+    if (best?.where === "friend") {
+      lines.push(
+        `Best guess sell time is now in ${name}: ${formatBells(profitBells(count, buy, best.price))}`,
+      );
+    } else if (best?.where === "home") {
+      lines.push(`Best guess sell time is now: ${formatBells(profitBells(count, buy, best.price))}`);
+    }
   } else if (namedSlot != null) {
     const known = homeSells[namedSlot];
     const range = homeRanges[namedSlot];

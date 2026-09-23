@@ -19,7 +19,8 @@ export function emoteForHint(hint: Hint): EmoteName {
   if (title.includes("waiting for sunday")) return "waiting";
   if (title.includes("not joan's") || title.includes("cannot happen")) return "shocked";
   if (title.includes("cannot pay you back")) return "sad";
-  if (title.includes("decreasing")) return "worried";
+  if (title.includes("sell in")) return "smug";
+  if (title.includes("decreasing") || title.includes("before it drops")) return "worried";
   if (title.includes("large spike is still ahead") || title.includes("still climbing")) {
     return "hopeful";
   }
